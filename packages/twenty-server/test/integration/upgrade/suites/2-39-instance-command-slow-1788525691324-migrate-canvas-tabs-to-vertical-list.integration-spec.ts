@@ -282,6 +282,23 @@ describe('MigrateCanvasTabsToVerticalListSlowInstanceCommand (integration)', () 
       widgetOverrides: movedCanvasWidgetOverrides,
       widgetPosition: movedCanvasWidgetPosition,
     });
+    const detachedCanvasWidgetPosition = {
+      layoutMode: 'CANVAS',
+      preservedValue: 'detached widget base position',
+    };
+    const detachedCanvasWidgetOverrides = {
+      pageLayoutTabId: null,
+      position: {
+        layoutMode: 'CANVAS',
+        preservedValue: 'detached widget override position',
+      },
+    };
+    const detachedCanvasWidgetTab = await seedTab({
+      layoutMode: 'CANVAS',
+      widgetIsActiveValues: [true],
+      widgetOverrides: detachedCanvasWidgetOverrides,
+      widgetPosition: detachedCanvasWidgetPosition,
+    });
 
     await dataSource.query(`
       CREATE TABLE "core"."canvasTabToVerticalListMigrationBackup" (
@@ -352,6 +369,20 @@ describe('MigrateCanvasTabsToVerticalListSlowInstanceCommand (integration)', () 
         heightBehavior: 'TAB_VIEWPORT',
       },
     });
+    await expect(
+      readTabAndWidgetState({
+        tabId: detachedCanvasWidgetTab.tabId,
+        widgetId: detachedCanvasWidgetTab.widgetIds[0],
+      }),
+    ).resolves.toEqual({
+      layoutMode: 'VERTICAL_LIST',
+      overrides: detachedCanvasWidgetOverrides,
+      position: {
+        layoutMode: 'VERTICAL_LIST',
+        index: 0,
+        heightBehavior: 'TAB_VIEWPORT',
+      },
+    });
     await expect(readTabLayoutMode(emptyCanvasTab.tabId)).resolves.toBe(
       'CANVAS',
     );
@@ -410,6 +441,16 @@ describe('MigrateCanvasTabsToVerticalListSlowInstanceCommand (integration)', () 
       layoutMode: 'CANVAS',
       overrides: movedCanvasWidgetOverrides,
       position: movedCanvasWidgetPosition,
+    });
+    await expect(
+      readTabAndWidgetState({
+        tabId: detachedCanvasWidgetTab.tabId,
+        widgetId: detachedCanvasWidgetTab.widgetIds[0],
+      }),
+    ).resolves.toEqual({
+      layoutMode: 'CANVAS',
+      overrides: detachedCanvasWidgetOverrides,
+      position: detachedCanvasWidgetPosition,
     });
 
     for (const nativeTab of [

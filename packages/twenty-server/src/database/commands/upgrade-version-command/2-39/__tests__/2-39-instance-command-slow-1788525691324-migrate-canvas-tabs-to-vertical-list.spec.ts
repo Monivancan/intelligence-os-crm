@@ -45,6 +45,10 @@ describe('MigrateCanvasTabsToVerticalListSlowInstanceCommand', () => {
       `widget."overrides"->>'pageLayoutTabId' = widget."pageLayoutTabId"::text`,
     );
     expect(query.mock.calls[2][0]).toContain(
+      `false
+          ) AS "pageLayoutWidgetPositionOverrideWasMigrated"`,
+    );
+    expect(query.mock.calls[2][0]).toContain(
       `SET "layoutMode" = 'VERTICAL_LIST'`,
     );
   });

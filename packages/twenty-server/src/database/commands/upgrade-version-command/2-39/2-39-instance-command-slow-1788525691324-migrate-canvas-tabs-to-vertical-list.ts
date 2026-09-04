@@ -92,11 +92,14 @@ export class MigrateCanvasTabsToVerticalListSlowInstanceCommand implements SlowI
           widget."id" AS "pageLayoutWidgetId",
           widget."position" AS "pageLayoutWidgetPosition",
           widget."overrides"->'position' AS "pageLayoutWidgetPositionOverride",
-          COALESCE(widget."overrides" ? 'position', false)
-            AND (
-              NOT COALESCE(widget."overrides" ? 'pageLayoutTabId', false)
-              OR widget."overrides"->>'pageLayoutTabId' = widget."pageLayoutTabId"::text
-            ) AS "pageLayoutWidgetPositionOverrideWasMigrated"
+          COALESCE(
+            COALESCE(widget."overrides" ? 'position', false)
+              AND (
+                NOT COALESCE(widget."overrides" ? 'pageLayoutTabId', false)
+                OR widget."overrides"->>'pageLayoutTabId' = widget."pageLayoutTabId"::text
+              ),
+            false
+          ) AS "pageLayoutWidgetPositionOverrideWasMigrated"
         FROM eligible_tabs
         JOIN "core"."pageLayoutWidget" widget
           ON widget."pageLayoutTabId" = eligible_tabs."id"
