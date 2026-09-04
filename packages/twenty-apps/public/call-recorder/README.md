@@ -29,6 +29,11 @@ by default. Turn it off to stop scheduling bots for upcoming meetings and cancel
 every recording that is already scheduled. Turn it back on and the app sweeps
 upcoming meetings to schedule bots again.
 
+Each calendar event also has a **Recording Bot** field. It reads On for
+upcoming meetings by default and can be set to Off per event. Once a meeting
+has ended it is cleared automatically unless the recorder was actually sent, so
+the field only reads On for meetings that were or will be recorded.
+
 ## 🎥 Supported meeting platforms
 
 The recording bot can only join meetings on these platforms:
