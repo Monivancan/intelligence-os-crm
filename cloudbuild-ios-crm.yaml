@@ -12,7 +12,9 @@ steps:
       - --target
       - twenty
       - --build-arg
-      - APP_VERSION=${_TAG}
+      - APP_VERSION=0.2.1
+      - --label
+      - org.opencontainers.image.revision=${_TAG}
       - --file
       - packages/twenty-docker/twenty/Dockerfile
       - --tag
