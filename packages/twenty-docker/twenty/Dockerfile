@@ -82,6 +82,7 @@ RUN npx nx build twenty-shared --skip-nx-cache && \
       packages/twenty-front/src/modules/auth/components/__tests__/IframedSessionExpired.test.tsx \
       packages/twenty-front/src/modules/auth/hooks/__tests__/useRedeemSsoExchangeToken.test.ts \
       packages/twenty-front/src/modules/auth/sign-in-up/components/internal/__tests__/SignInUpSsoExchangeTokenEffect.test.tsx \
+      packages/twenty-front/src/modules/app/states/__tests__/isAppEffectRedirectEnabledState.test.ts \
       packages/twenty-front/src/modules/domain-manager/utils/__tests__/iosEmbedHost.test.ts \
       --config=packages/twenty-front/jest.config.mjs --runInBand
 # To skip the memory-intensive frontend build, pre-build on the host:
