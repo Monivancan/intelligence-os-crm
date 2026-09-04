@@ -100,8 +100,11 @@ const setup = ({
   const userWorkspaceService = {
     addUserToWorkspaceIfUserNotInWorkspace: jest.fn(),
   };
+  let isProfileCreationPending = true;
   const onboardingService = {
-    completeOnboardingProfileStepIfNameProvided: jest.fn(),
+    completeOnboardingProfileStepIfNameProvided: jest.fn(() => {
+      isProfileCreationPending = false;
+    }),
   };
 
   const service = new IosSessionExchangeService(
@@ -128,6 +131,7 @@ const setup = ({
 
   return {
     redisSet,
+    isProfileCreationPending: () => isProfileCreationPending,
     onboardingService,
     roleService,
     service,
@@ -227,6 +231,16 @@ describe('IosSessionExchangeService', () => {
       firstName: 'IOS',
       lastName: 'Owner',
     });
+  });
+
+  it('completes profile onboarding for an existing membership left pending by an interrupted exchange', async () => {
+    const { isProfileCreationPending, service } = setup({
+      existingMembership: true,
+    });
+
+    await service.exchange(`Bearer ${buildAssertion({ role: 'member' })}`);
+
+    expect(isProfileCreationPending()).toBe(false);
   });
 
   it('fails closed when the canonical non-admin Member role is unavailable', async () => {

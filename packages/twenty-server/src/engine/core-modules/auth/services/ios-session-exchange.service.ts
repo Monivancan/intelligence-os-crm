@@ -89,19 +89,11 @@ export class IosSessionExchangeService {
     });
 
     if (!isDefined(userWorkspace)) {
-      const [firstName, ...lastNameParts] = assertion.name.trim().split(/\s+/);
-
       await this.userWorkspaceService.addUserToWorkspaceIfUserNotInWorkspace(
         user,
         workspace,
         roleId,
       );
-      await this.onboardingService.completeOnboardingProfileStepIfNameProvided({
-        userId: user.id,
-        workspaceId: workspace.id,
-        firstName,
-        lastName: lastNameParts.join(' '),
-      });
       userWorkspace = await this.userWorkspaceRepository.findOneOrFail({
         where: { userId: user.id, workspaceId: workspace.id },
       });
@@ -112,6 +104,15 @@ export class IosSessionExchangeService {
         roleId,
       });
     }
+
+    const [firstName, ...lastNameParts] = assertion.name.trim().split(/\s+/);
+
+    await this.onboardingService.completeOnboardingProfileStepIfNameProvided({
+      userId: user.id,
+      workspaceId: workspace.id,
+      firstName,
+      lastName: lastNameParts.join(' '),
+    });
 
     const workspaceMember = await this.userService.loadWorkspaceMember(
       user,
