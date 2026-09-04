@@ -1,0 +1,25 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --target
+      - twenty
+      - --build-arg
+      - APP_VERSION=${_TAG}
+      - --file
+      - packages/twenty-docker/twenty/Dockerfile
+      - --tag
+      - ${_IMAGE}:${_TAG}
+      - .
+
+images:
+  - ${_IMAGE}:${_TAG}
+
+options:
+  machineType: E2_HIGHCPU_8
+  diskSizeGb: 100
+  logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _IMAGE: asia-south1-docker.pkg.dev/speedy-rhino-495614-r2/intelligence-os-crm/twenty
+  _TAG: required

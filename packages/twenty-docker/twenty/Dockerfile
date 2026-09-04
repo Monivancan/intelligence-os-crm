@@ -130,7 +130,7 @@ COPY --chown=1000 --from=twenty-server-build /app/packages/twenty-emails/dist /a
 COPY --chown=1000 --from=twenty-server-build /app/packages/twenty-client-sdk/package.json /app/packages/twenty-client-sdk/
 COPY --chown=1000 --from=twenty-server-build /app/packages/twenty-client-sdk/dist /app/packages/twenty-client-sdk/dist
 
-LABEL org.opencontainers.image.source=https://github.com/twentyhq/twenty
+LABEL org.opencontainers.image.source=https://github.com/Monivancan/intelligence-os-crm
 LABEL org.opencontainers.image.description="Twenty server image (no frontend)."
 
 # Remove unused, unpatchable components the scanner flags (none are executed at
