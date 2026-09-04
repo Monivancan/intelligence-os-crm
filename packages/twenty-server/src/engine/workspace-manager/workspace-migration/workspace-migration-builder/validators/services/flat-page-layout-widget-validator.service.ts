@@ -7,7 +7,7 @@ import {
   PageLayoutWidgetPosition,
   PageLayoutWidgetVerticalListHeightBehavior,
 } from 'twenty-shared/types';
-import { isDefined } from 'twenty-shared/utils';
+import { isDefined, isViewportFillingWidgetType } from 'twenty-shared/utils';
 
 import { findFlatEntityByUniversalIdentifier } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-universal-identifier.util';
 import { FlatPageLayoutWidgetTypeValidatorService } from 'src/engine/metadata-modules/flat-page-layout-widget/services/flat-page-layout-widget-type-validator.service';
@@ -38,6 +38,7 @@ export class FlatPageLayoutWidgetValidatorService {
   public async validateFlatPageLayoutWidgetUpdate({
     universalIdentifier,
     flatEntityUpdate,
+    finalFlatEntityMaps,
     optimisticFlatEntityMapsAndRelatedFlatEntityMaps,
     additionalCacheDataMaps: { featureFlagsMap },
     workspaceId,
@@ -110,8 +111,7 @@ export class FlatPageLayoutWidgetValidatorService {
       ...this.validateTabViewportConstraints({
         widget: updatedFlatPageLayoutWidget,
         relatedWidgets: Object.values(
-          optimisticFlatEntityMapsAndRelatedFlatEntityMaps
-            .flatPageLayoutWidgetMaps.byUniversalIdentifier,
+          finalFlatEntityMaps.byUniversalIdentifier,
         ).filter(isDefined),
       }),
     );
@@ -308,9 +308,7 @@ export class FlatPageLayoutWidgetValidatorService {
       return [];
     }
 
-    const isTabViewportWidget =
-      position.heightBehavior ===
-      PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT;
+    const isTabViewportWidget = this.isViewportFillingWidget(widget);
 
     const pageLayoutTabUniversalIdentifier =
       this.getEffectivePageLayoutTabUniversalIdentifier(widget);
@@ -327,13 +325,7 @@ export class FlatPageLayoutWidgetValidatorService {
       (siblingWidget) => {
         const siblingPosition = this.getEffectivePosition(siblingWidget);
 
-        return (
-          isDefined(siblingPosition) &&
-          siblingPosition.layoutMode ===
-            PageLayoutTabLayoutMode.VERTICAL_LIST &&
-          siblingPosition.heightBehavior ===
-            PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT
-        );
+        return this.isViewportFillingWidget(siblingWidget);
       },
     );
 
@@ -362,8 +354,7 @@ export class FlatPageLayoutWidgetValidatorService {
         }
 
         const isSiblingTabViewport =
-          siblingPosition.heightBehavior ===
-          PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT;
+          this.isViewportFillingWidget(siblingWidget);
 
         return isTabViewportWidget
           ? !isSiblingTabViewport && siblingPosition.index >= position.index
@@ -385,6 +376,28 @@ export class FlatPageLayoutWidgetValidatorService {
     }
 
     return errors;
+  }
+
+  private isViewportFillingWidget(
+    widget: UniversalFlatPageLayoutWidget,
+  ): boolean {
+    const position = this.getEffectivePosition(widget);
+
+    if (
+      !isDefined(position) ||
+      position.layoutMode !== PageLayoutTabLayoutMode.VERTICAL_LIST
+    ) {
+      return false;
+    }
+
+    if (isDefined(position.heightBehavior)) {
+      return (
+        position.heightBehavior ===
+        PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT
+      );
+    }
+
+    return isViewportFillingWidgetType(widget.type);
   }
 
   private validatePosition({

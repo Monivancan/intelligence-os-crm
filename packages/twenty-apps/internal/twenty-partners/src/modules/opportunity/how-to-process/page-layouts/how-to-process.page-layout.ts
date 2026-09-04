@@ -1,8 +1,4 @@
-import {
-  PageLayoutTabLayoutMode,
-  PageLayoutWidgetVerticalListHeightBehavior,
-  definePageLayout,
-} from 'twenty-sdk/define';
+import { PageLayoutTabLayoutMode, definePageLayout } from 'twenty-sdk/define';
 
 import {
   HOW_TO_PROCESS_FRONT_COMPONENT_ID,
@@ -30,8 +26,7 @@ export default definePageLayout({
           position: {
             layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
             index: 0,
-            heightBehavior:
-              PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+            heightBehavior: 'TAB_VIEWPORT',
           },
           configuration: {
             configurationType: 'FRONT_COMPONENT',

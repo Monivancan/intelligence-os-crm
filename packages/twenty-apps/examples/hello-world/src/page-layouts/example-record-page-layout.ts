@@ -1,10 +1,6 @@
 import { EXAMPLE_OBJECT_UNIVERSAL_IDENTIFIER } from 'src/objects/example-object';
 import { HELLO_WORLD_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER } from 'src/front-components/hello-world';
-import {
-  definePageLayout,
-  PageLayoutTabLayoutMode,
-  PageLayoutWidgetVerticalListHeightBehavior,
-} from 'twenty-sdk/define';
+import { definePageLayout, PageLayoutTabLayoutMode } from 'twenty-sdk/define';
 
 export default definePageLayout({
   universalIdentifier: '203aeb94-6701-46d6-9af1-be2bbcc9e134',
@@ -26,8 +22,7 @@ export default definePageLayout({
           position: {
             layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
             index: 0,
-            heightBehavior:
-              PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+            heightBehavior: 'TAB_VIEWPORT',
           },
           configuration: {
             configurationType: 'FRONT_COMPONENT',

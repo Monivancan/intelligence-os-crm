@@ -320,6 +320,7 @@ export abstract class WorkspaceEntityMigrationBuilderService<
       }
 
       const validationResult = await this.validateFlatEntityUpdate({
+        finalFlatEntityMaps: toFlatEntityMaps,
         flatEntityUpdate: flatEntityUpdate.update,
         optimisticFlatEntityMapsAndRelatedFlatEntityMaps,
         workspaceId,

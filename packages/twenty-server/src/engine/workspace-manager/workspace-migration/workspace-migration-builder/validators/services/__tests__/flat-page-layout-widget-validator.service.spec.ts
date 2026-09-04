@@ -14,15 +14,17 @@ const buildWidget = ({
   universalIdentifier,
   index,
   heightBehavior,
+  type = WidgetType.FRONT_COMPONENT,
 }: {
   universalIdentifier: string;
   index: number;
   heightBehavior?: PageLayoutWidgetVerticalListHeightBehavior;
+  type?: WidgetType;
 }) =>
   ({
     universalIdentifier,
     title: universalIdentifier,
-    type: WidgetType.FRONT_COMPONENT,
+    type,
     isActive: true,
     pageLayoutTabUniversalIdentifier: TAB_UNIVERSAL_IDENTIFIER,
     universalOverrides: null,
@@ -101,6 +103,59 @@ describe('FlatPageLayoutWidgetValidatorService', () => {
     );
   });
 
+  it('treats a legacy viewport-filling widget type as TAB_VIEWPORT', async () => {
+    const result = await validateCreation({
+      widget: buildWidget({
+        universalIdentifier: 'viewport',
+        index: 1,
+        heightBehavior: PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+      }),
+      siblingWidgets: [
+        buildWidget({
+          universalIdentifier: 'legacy-viewport',
+          index: 0,
+          type: WidgetType.TIMELINE,
+        }),
+      ],
+    });
+
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining(
+            'only one active TAB_VIEWPORT widget',
+          ),
+        }),
+      ]),
+    );
+  });
+
+  it('orders fit-content widgets before legacy viewport-filling widget types', async () => {
+    const result = await validateCreation({
+      widget: buildWidget({
+        universalIdentifier: 'fit-content',
+        index: 1,
+      }),
+      siblingWidgets: [
+        buildWidget({
+          universalIdentifier: 'legacy-viewport',
+          index: 0,
+          type: WidgetType.TIMELINE,
+        }),
+      ],
+    });
+
+    expect(result.errors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: expect.stringContaining(
+            'must be ordered after fit-content widgets',
+          ),
+        }),
+      ]),
+    );
+  });
+
   it('rejects TAB_VIEWPORT before an active fit-content widget', async () => {
     const result = await validateCreation({
       widget: buildWidget({
@@ -170,6 +225,63 @@ describe('FlatPageLayoutWidgetValidatorService', () => {
         }),
       ],
     });
+
+    expect(result.errors).toEqual([]);
+  });
+
+  it('validates a TAB_VIEWPORT transfer against the complete target map', async () => {
+    const existingViewportWidget = buildWidget({
+      universalIdentifier: 'existing-viewport',
+      index: 1,
+      heightBehavior: PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+    });
+    const nextViewportWidget = buildWidget({
+      universalIdentifier: 'next-viewport',
+      index: 0,
+    });
+    const finalFitContentWidget = buildWidget({
+      universalIdentifier: 'existing-viewport',
+      index: 0,
+      heightBehavior: PageLayoutWidgetVerticalListHeightBehavior.FIT_CONTENT,
+    });
+    const finalViewportWidget = buildWidget({
+      universalIdentifier: 'next-viewport',
+      index: 1,
+      heightBehavior: PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+    });
+
+    const result = await service.validateFlatPageLayoutWidgetUpdate({
+      universalIdentifier: nextViewportWidget.universalIdentifier,
+      flatEntityUpdate: {
+        position: finalViewportWidget.position,
+      },
+      finalFlatEntityMaps: {
+        byUniversalIdentifier: {
+          [finalFitContentWidget.universalIdentifier]: finalFitContentWidget,
+          [finalViewportWidget.universalIdentifier]: finalViewportWidget,
+        },
+      },
+      optimisticFlatEntityMapsAndRelatedFlatEntityMaps: {
+        flatPageLayoutWidgetMaps: {
+          byUniversalIdentifier: {
+            [existingViewportWidget.universalIdentifier]:
+              existingViewportWidget,
+            [nextViewportWidget.universalIdentifier]: nextViewportWidget,
+          },
+        },
+        flatPageLayoutTabMaps: {
+          byUniversalIdentifier: {
+            [TAB_UNIVERSAL_IDENTIFIER]: {
+              universalIdentifier: TAB_UNIVERSAL_IDENTIFIER,
+              layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+            },
+          },
+        },
+      },
+      additionalCacheDataMaps: { featureFlagsMap: {} },
+    } as unknown as Parameters<
+      FlatPageLayoutWidgetValidatorService['validateFlatPageLayoutWidgetUpdate']
+    >[0]);
 
     expect(result.errors).toEqual([]);
   });
