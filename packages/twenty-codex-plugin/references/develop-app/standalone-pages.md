@@ -445,7 +445,7 @@ Minimal standalone page:
 - One front component.
 - One `STANDALONE_PAGE` page layout.
 - One `PAGE_LAYOUT` navigation item.
-- One 12 x 12 `FRONT_COMPONENT` widget.
+- One `FRONT_COMPONENT` widget with `TAB_VIEWPORT` height behavior.
 
 Full-screen operational page:
 

@@ -27,6 +27,15 @@ describe('MigrateCanvasTabsToVerticalListSlowInstanceCommand', () => {
       `'heightBehavior', 'TAB_VIEWPORT'`,
     );
     expect(query.mock.calls[2][0]).toContain(
+      `widget."overrides"->'position' AS "pageLayoutWidgetPositionOverride"`,
+    );
+    expect(query.mock.calls[2][0]).toContain(
+      `WHEN widget."overrides" ? 'position'`,
+    );
+    expect(query.mock.calls[2][0]).toContain(
+      `widget."overrides"->>'pageLayoutTabId' = widget."pageLayoutTabId"::text`,
+    );
+    expect(query.mock.calls[2][0]).toContain(
       `SET "layoutMode" = 'VERTICAL_LIST'`,
     );
   });
@@ -42,6 +51,9 @@ describe('MigrateCanvasTabsToVerticalListSlowInstanceCommand', () => {
     );
     expect(query.mock.calls[0][0]).toContain(
       `SET "position" = widgets_to_restore."pageLayoutWidgetPosition"`,
+    );
+    expect(query.mock.calls[0][0]).toContain(
+      `widgets_to_restore."pageLayoutWidgetPositionOverride"`,
     );
     expect(query.mock.calls[0][0]).toContain(`SET "layoutMode" = 'CANVAS'`);
     expect(query.mock.calls[1][0]).toContain(
