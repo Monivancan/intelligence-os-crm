@@ -1,3 +1,4 @@
+import { IframedSessionExpired } from '@/auth/components/IframedSessionExpired';
 import { useSignInUp } from '@/auth/sign-in-up/hooks/useSignInUp';
 import { useSignInUpForm } from '@/auth/sign-in-up/hooks/useSignInUpForm';
 import { isCreatingWorkspaceState } from '@/auth/states/isCreatingWorkspaceState';
@@ -24,7 +25,8 @@ import { isMultiWorkspaceEnabledState } from '@/client-config/states/isMultiWork
 import { useGetPublicWorkspaceDataByDomain } from '@/domain-manager/hooks/useGetPublicWorkspaceDataByDomain';
 import { useIsCurrentLocationOnAWorkspace } from '@/domain-manager/hooks/useIsCurrentLocationOnAWorkspace';
 import { useIsCurrentLocationOnDefaultDomain } from '@/domain-manager/hooks/useIsCurrentLocationOnDefaultDomain';
-import { useMemo } from 'react';
+import { isHostedInIosEmbed } from '@/domain-manager/utils/iosEmbedHost';
+import { useMemo, useState } from 'react';
 
 import { SignInUpGlobalScopeFormEffect } from '@/auth/sign-in-up/components/internal/SignInUpGlobalScopeFormEffect';
 import { SignInUpSsoExchangeTokenEffect } from '@/auth/sign-in-up/components/internal/SignInUpSsoExchangeTokenEffect';
@@ -58,6 +60,33 @@ const StyledBackground = styled.div`
 `;
 
 export const SignInUp = () => {
+  const [hasEmbedSessionExpired, setHasEmbedSessionExpired] = useState(false);
+
+  // Hard product rule: IOS CRM iframe must never show Twenty login
+  // ("Welcome, Apple." / Continue / tim@apple.dev). Host already authenticated.
+  if (isHostedInIosEmbed()) {
+    const hasExchangeToken = new URLSearchParams(
+      window.location.hash.substring(1),
+    ).has('ssoExchangeToken');
+
+    return hasExchangeToken && !hasEmbedSessionExpired ? (
+      <>
+        <SignInUpSsoExchangeTokenEffect
+          onFailure={() => setHasEmbedSessionExpired(true)}
+        />
+        <StyledLoaderContainer>
+          <Loader />
+        </StyledLoaderContainer>
+      </>
+    ) : (
+      <IframedSessionExpired />
+    );
+  }
+
+  return <SignInUpStandalone />;
+};
+
+const SignInUpStandalone = () => {
   const { t } = useLingui();
   const setSignInUpStep = useSetAtomState(signInUpStepState);
   const clientConfigApiStatus = useAtomStateValue(clientConfigApiStatusState);

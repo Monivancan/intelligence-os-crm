@@ -15,7 +15,9 @@ import { GoogleAuthController } from 'src/engine/core-modules/auth/controllers/g
 import { MicrosoftAPIsAuthController } from 'src/engine/core-modules/auth/controllers/microsoft-apis-auth.controller';
 import { MicrosoftAuthController } from 'src/engine/core-modules/auth/controllers/microsoft-auth.controller';
 import { OAuthPropagatorController } from 'src/engine/core-modules/auth/controllers/oauth-propagator.controller';
+import { IosSessionExchangeController } from 'src/engine/core-modules/auth/controllers/ios-session-exchange.controller';
 import { SsoAuthController } from 'src/engine/core-modules/auth/controllers/sso-auth.controller';
+import { IosSessionExchangeService } from 'src/engine/core-modules/auth/services/ios-session-exchange.service';
 import { AuthSsoService } from 'src/engine/core-modules/auth/services/auth-sso.service';
 import { CreateCalendarChannelService } from 'src/engine/core-modules/auth/services/create-calendar-channel.service';
 import { CreateConnectedAccountService } from 'src/engine/core-modules/auth/services/create-connected-account.service';
@@ -69,6 +71,8 @@ import { ConnectedAccountTokenEncryptionModule } from 'src/engine/metadata-modul
 import { MessageChannelEntity } from 'src/engine/metadata-modules/message-channel/entities/message-channel.entity';
 import { ObjectMetadataEntity } from 'src/engine/metadata-modules/object-metadata/object-metadata.entity';
 import { PermissionsModule } from 'src/engine/metadata-modules/permissions/permissions.module';
+import { RoleModule } from 'src/engine/metadata-modules/role/role.module';
+import { UserRoleModule } from 'src/engine/metadata-modules/user-role/user-role.module';
 import { WorkspaceCacheModule } from 'src/engine/workspace-cache/workspace-cache.module';
 import { CalendarChannelSyncStatusService } from 'src/modules/calendar/common/services/calendar-channel-sync-status.service';
 import { ConnectedAccountModule } from 'src/modules/connected-account/connected-account.module';
@@ -118,6 +122,8 @@ import { JwtAuthStrategy } from './strategies/jwt.auth.strategy';
     ImpersonationAuthorizationModule,
     MetricsModule,
     PermissionsModule,
+    RoleModule,
+    UserRoleModule,
     TwoFactorAuthenticationModule,
     ApiKeyModule,
     EventLogEmitterModule,
@@ -145,6 +151,7 @@ import { JwtAuthStrategy } from './strategies/jwt.auth.strategy';
     OAuthPropagatorController,
     SsoAuthController,
     ConnectionProviderOAuthController,
+    IosSessionExchangeController,
   ],
   providers: [
     SignInUpService,
@@ -171,6 +178,7 @@ import { JwtAuthStrategy } from './strategies/jwt.auth.strategy';
     UpdateConnectedAccountOnReconnectService,
     TransientTokenService,
     AuthSsoService,
+    IosSessionExchangeService,
   ],
   exports: [
     AccessTokenService,

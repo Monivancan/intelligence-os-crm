@@ -414,6 +414,26 @@ export class ConfigVariables {
   AUTH_COOKIE_ALLOWED_ORIGINS = '';
 
   @ConfigVariablesMetadata({
+    group: ConfigVariablesGroup.SERVER_CONFIG,
+    isSensitive: true,
+    description: 'Shared HS256 secret for private Intelligence OS sessions',
+    isEnvOnly: true,
+    type: ConfigVariableType.STRING,
+  })
+  @IsOptional()
+  IOS_SESSION_EXCHANGE_SECRET = '';
+
+  @ConfigVariablesMetadata({
+    group: ConfigVariablesGroup.SERVER_CONFIG,
+    description:
+      'JSON map of Intelligence OS workspace IDs to Twenty workspace IDs',
+    isEnvOnly: true,
+    type: ConfigVariableType.STRING,
+  })
+  @IsOptional()
+  IOS_WORKSPACE_MAPPINGS = '{}';
+
+  @ConfigVariablesMetadata({
     group: ConfigVariablesGroup.TOKENS_DURATION,
     description: 'Duration for which the login token is valid',
     type: ConfigVariableType.STRING,
