@@ -8,6 +8,7 @@ import {
 } from 'twenty-shared/types';
 
 import { fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget } from 'src/engine/core-modules/application/application-manifest/converters/from-page-layout-widget-manifest-to-universal-flat-page-layout-widget.util';
+import { ApplicationException } from 'src/engine/core-modules/application/application.exception';
 
 describe('fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget', () => {
   const now = '2026-01-01T00:00:00.000Z';
@@ -288,23 +289,27 @@ describe('fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget', () => {
   it.each([
     {
       pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.GRID,
-      isLegacyCanvasTab: false,
+      pageLayoutTabManifestLayoutMode: PageLayoutTabLayoutMode.GRID,
       manifestLayoutMode: PageLayoutTabLayoutMode.GRID,
     },
     {
       pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.CANVAS,
-      isLegacyCanvasTab: false,
+      pageLayoutTabManifestLayoutMode: PageLayoutTabLayoutMode.CANVAS,
       manifestLayoutMode: PageLayoutTabLayoutMode.CANVAS,
     },
     {
       pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-      isLegacyCanvasTab: true,
+      pageLayoutTabManifestLayoutMode: PageLayoutTabLayoutMode.CANVAS,
       manifestLayoutMode: PageLayoutTabLayoutMode.CANVAS,
     },
   ])(
     'should reject top-level heightBehavior on a $manifestLayoutMode tab',
-    ({ pageLayoutTabLayoutMode, isLegacyCanvasTab, manifestLayoutMode }) => {
-      expect(() =>
+    ({
+      pageLayoutTabLayoutMode,
+      pageLayoutTabManifestLayoutMode,
+      manifestLayoutMode,
+    }) => {
+      const convertWidget = () =>
         fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget({
           pageLayoutWidgetManifest: {
             universalIdentifier: 'widget-uuid-invalid',
@@ -318,11 +323,13 @@ describe('fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget', () => {
           },
           pageLayoutTabUniversalIdentifier,
           pageLayoutTabLayoutMode,
-          isLegacyCanvasTab,
+          pageLayoutTabManifestLayoutMode,
           applicationUniversalIdentifier,
           now,
-        }),
-      ).toThrow(
+        });
+
+      expect(convertWidget).toThrow(ApplicationException);
+      expect(convertWidget).toThrow(
         `Page layout widget "Invalid Widget" defines heightBehavior, but its parent tab uses ${manifestLayoutMode}. heightBehavior is only supported for VERTICAL_LIST tabs.`,
       );
     },
@@ -342,7 +349,7 @@ describe('fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget', () => {
       },
       pageLayoutTabUniversalIdentifier,
       pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-      isLegacyCanvasTab: true,
+      pageLayoutTabManifestLayoutMode: PageLayoutTabLayoutMode.CANVAS,
       applicationUniversalIdentifier,
       now,
     });

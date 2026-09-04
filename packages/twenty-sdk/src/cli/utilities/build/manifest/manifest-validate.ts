@@ -6,12 +6,12 @@ import {
   type PageLayoutManifest,
   type PageLayoutTabManifest,
   type PageLayoutWidgetManifest,
+  resolvePageLayoutTabManifestLayoutMode,
 } from 'twenty-shared/application';
 import {
   GRAPH_WIDGET_CONFIGURATION_TYPES,
   type GraphWidgetConfigurationType,
   PageLayoutTabLayoutMode,
-  PageLayoutType,
   type PageLayoutWidgetUniversalConfiguration,
   RelationType,
 } from 'twenty-shared/types';
@@ -160,18 +160,6 @@ const validateGraphWidgets = (
   return errors;
 };
 
-const getPageLayoutTabLayoutMode = ({
-  pageLayoutTab,
-  pageLayoutType,
-}: {
-  pageLayoutTab: PageLayoutTabManifest;
-  pageLayoutType: PageLayoutManifest['type'] | undefined;
-}): PageLayoutTabLayoutMode =>
-  pageLayoutTab.layoutMode ??
-  (pageLayoutType === PageLayoutType.STANDALONE_PAGE
-    ? PageLayoutTabLayoutMode.VERTICAL_LIST
-    : PageLayoutTabLayoutMode.GRID);
-
 const validatePageLayoutTabWidgetHeightBehaviors = ({
   pageLayoutTab,
   pageLayoutType,
@@ -179,12 +167,12 @@ const validatePageLayoutTabWidgetHeightBehaviors = ({
   pageLayoutTab: PageLayoutTabManifest;
   pageLayoutType: PageLayoutManifest['type'] | undefined;
 }): string[] => {
-  const layoutMode = getPageLayoutTabLayoutMode({
-    pageLayoutTab,
+  const { manifestLayoutMode } = resolvePageLayoutTabManifestLayoutMode({
+    pageLayoutTabManifest: pageLayoutTab,
     pageLayoutType,
   });
 
-  if (layoutMode === PageLayoutTabLayoutMode.VERTICAL_LIST) {
+  if (manifestLayoutMode === PageLayoutTabLayoutMode.VERTICAL_LIST) {
     return [];
   }
 
@@ -192,7 +180,7 @@ const validatePageLayoutTabWidgetHeightBehaviors = ({
     .filter((widget) => isDefined(widget.heightBehavior))
     .map(
       (widget) =>
-        `Page layout widget "${widget.title}" defines heightBehavior, but its parent tab "${pageLayoutTab.title}" uses ${layoutMode}. heightBehavior is only supported for VERTICAL_LIST tabs.`,
+        `Page layout widget "${widget.title}" defines heightBehavior, but its parent tab "${pageLayoutTab.title}" uses ${manifestLayoutMode}. heightBehavior is only supported for VERTICAL_LIST tabs.`,
     );
 };
 

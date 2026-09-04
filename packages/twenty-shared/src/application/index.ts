@@ -163,6 +163,7 @@ export type {
 } from './permissionFlagManifestType';
 export type { PostInstallLogicFunctionApplicationManifest } from './postInstallLogicFunctionApplicationType';
 export type { PreInstallLogicFunctionApplicationManifest } from './preInstallLogicFunctionApplicationType';
+export { resolvePageLayoutTabManifestLayoutMode } from './resolvePageLayoutTabManifestLayoutMode';
 export type {
   ObjectPermissionManifest,
   FieldPermissionManifest,

@@ -9,6 +9,10 @@ import {
 } from 'twenty-shared/types';
 import { assertUnreachable, isDefined } from 'twenty-shared/utils';
 
+import {
+  ApplicationException,
+  ApplicationExceptionCode,
+} from 'src/engine/core-modules/application/application.exception';
 import { type UniversalFlatPageLayoutWidget } from 'src/engine/workspace-manager/workspace-migration/universal-flat-entity/types/universal-flat-page-layout-widget.type';
 
 type PageLayoutWidgetManifestWithLegacyGridPosition =
@@ -19,25 +23,27 @@ type PageLayoutWidgetManifestWithLegacyGridPosition =
 const getPageLayoutWidgetPosition = ({
   pageLayoutWidgetManifest,
   pageLayoutTabLayoutMode,
+  pageLayoutTabManifestLayoutMode,
   widgetIndex,
-  isLegacyCanvasTab,
 }: {
   pageLayoutWidgetManifest: PageLayoutWidgetManifest;
   pageLayoutTabLayoutMode: PageLayoutTabLayoutMode;
+  pageLayoutTabManifestLayoutMode: PageLayoutTabLayoutMode | undefined;
   widgetIndex: number;
-  isLegacyCanvasTab: boolean;
 }): PageLayoutWidgetPosition => {
+  const manifestLayoutMode =
+    pageLayoutTabManifestLayoutMode ?? pageLayoutTabLayoutMode;
+  const isLegacyCanvasTab =
+    manifestLayoutMode === PageLayoutTabLayoutMode.CANVAS &&
+    pageLayoutTabLayoutMode === PageLayoutTabLayoutMode.VERTICAL_LIST;
+
   if (
     isDefined(pageLayoutWidgetManifest.heightBehavior) &&
-    (pageLayoutTabLayoutMode !== PageLayoutTabLayoutMode.VERTICAL_LIST ||
-      isLegacyCanvasTab)
+    manifestLayoutMode !== PageLayoutTabLayoutMode.VERTICAL_LIST
   ) {
-    const manifestLayoutMode = isLegacyCanvasTab
-      ? PageLayoutTabLayoutMode.CANVAS
-      : pageLayoutTabLayoutMode;
-
-    throw new Error(
+    throw new ApplicationException(
       `Page layout widget "${pageLayoutWidgetManifest.title}" defines heightBehavior, but its parent tab uses ${manifestLayoutMode}. heightBehavior is only supported for VERTICAL_LIST tabs.`,
+      ApplicationExceptionCode.INVALID_INPUT,
     );
   }
 
@@ -104,16 +110,16 @@ export const fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget = ({
   pageLayoutWidgetManifest,
   pageLayoutTabUniversalIdentifier,
   pageLayoutTabLayoutMode = PageLayoutTabLayoutMode.GRID,
+  pageLayoutTabManifestLayoutMode,
   widgetIndex = 0,
-  isLegacyCanvasTab = false,
   applicationUniversalIdentifier,
   now,
 }: {
   pageLayoutWidgetManifest: PageLayoutWidgetManifest;
   pageLayoutTabUniversalIdentifier: string;
   pageLayoutTabLayoutMode?: PageLayoutTabLayoutMode;
+  pageLayoutTabManifestLayoutMode?: PageLayoutTabLayoutMode;
   widgetIndex?: number;
-  isLegacyCanvasTab?: boolean;
   applicationUniversalIdentifier: string;
   now: string;
 }): UniversalFlatPageLayoutWidget => {
@@ -131,8 +137,8 @@ export const fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget = ({
     position: getPageLayoutWidgetPosition({
       pageLayoutWidgetManifest,
       pageLayoutTabLayoutMode,
+      pageLayoutTabManifestLayoutMode,
       widgetIndex,
-      isLegacyCanvasTab,
     }),
     universalConfiguration:
       pageLayoutWidgetManifest.configuration as UniversalFlatPageLayoutWidget['universalConfiguration'],

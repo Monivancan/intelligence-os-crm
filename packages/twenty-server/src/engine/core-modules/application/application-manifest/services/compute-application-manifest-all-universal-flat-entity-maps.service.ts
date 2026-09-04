@@ -5,10 +5,7 @@ import {
   serializeApplicationVariableValue,
 } from 'twenty-shared/application';
 import { MAX_CUSTOM_INDEXES_PER_OBJECT } from 'twenty-shared/constants';
-import {
-  FieldMetadataType,
-  PageLayoutTabLayoutMode,
-} from 'twenty-shared/types';
+import { FieldMetadataType } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 
 import { fromAgentManifestToUniversalFlatRoleTarget } from 'src/engine/core-modules/application/application-manifest/converters/from-agent-manifest-to-universal-flat-role-target.util';
@@ -544,11 +541,8 @@ export class ComputeApplicationManifestAllUniversalFlatEntityMapsService {
                 fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget({
                   pageLayoutWidgetManifest,
                   pageLayoutTabLayoutMode: pageLayoutTab.layoutMode,
-                  isLegacyCanvasTab:
-                    pageLayoutTabManifest.layoutMode ===
-                      PageLayoutTabLayoutMode.CANVAS &&
-                    pageLayoutTab.layoutMode ===
-                      PageLayoutTabLayoutMode.VERTICAL_LIST,
+                  pageLayoutTabManifestLayoutMode:
+                    pageLayoutTabManifest.layoutMode,
                   widgetIndex,
                   pageLayoutTabUniversalIdentifier:
                     pageLayoutTabManifest.universalIdentifier,
@@ -600,11 +594,7 @@ export class ComputeApplicationManifestAllUniversalFlatEntityMapsService {
             fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget({
               pageLayoutWidgetManifest,
               pageLayoutTabLayoutMode: pageLayoutTab.layoutMode,
-              isLegacyCanvasTab:
-                pageLayoutTabManifest.layoutMode ===
-                  PageLayoutTabLayoutMode.CANVAS &&
-                pageLayoutTab.layoutMode ===
-                  PageLayoutTabLayoutMode.VERTICAL_LIST,
+              pageLayoutTabManifestLayoutMode: pageLayoutTabManifest.layoutMode,
               widgetIndex,
               pageLayoutTabUniversalIdentifier:
                 pageLayoutTabManifest.universalIdentifier,
