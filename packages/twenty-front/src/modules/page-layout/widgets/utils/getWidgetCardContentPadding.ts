@@ -4,7 +4,7 @@ import {
   getWidgetContentPadding,
   type WidgetContentPadding,
 } from '@/page-layout/widgets/utils/getWidgetContentPadding';
-import { isTabViewportWidget } from '@/page-layout/widgets/utils/isViewportFillingWidget';
+import { isTabViewportWidget } from '@/page-layout/widgets/utils/isTabViewportWidget';
 import { isWidgetCardFlushInViewMode } from '@/page-layout/widgets/utils/isWidgetCardFlushInViewMode';
 
 type GetWidgetCardContentPaddingParams = {

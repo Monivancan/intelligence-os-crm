@@ -6,14 +6,6 @@ import { PageLayoutWidgetVerticalListHeightBehavior } from '~/generated-metadata
 
 type ViewportFillingWidget = Pick<PageLayoutWidget, 'position' | 'type'>;
 
-export const isTabViewportWidget = (
-  widget: Pick<PageLayoutWidget, 'position'>,
-): boolean =>
-  isDefined(widget.position) &&
-  isVerticalListPosition(widget.position) &&
-  widget.position.heightBehavior ===
-    PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT;
-
 export const isViewportFillingWidget = (
   widget: ViewportFillingWidget,
 ): boolean => {

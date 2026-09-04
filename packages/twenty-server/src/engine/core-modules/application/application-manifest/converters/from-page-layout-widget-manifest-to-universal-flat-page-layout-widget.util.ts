@@ -63,15 +63,22 @@ const getPageLayoutWidgetPosition = ({
         : undefined;
     const heightBehavior =
       pageLayoutWidgetManifest.heightBehavior ?? legacyHeightBehavior;
+    const normalizedHeightBehavior = (() => {
+      switch (heightBehavior) {
+        case undefined:
+          return undefined;
+        case 'FIT_CONTENT':
+          return PageLayoutWidgetVerticalListHeightBehavior.FIT_CONTENT;
+        case 'TAB_VIEWPORT':
+          return PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT;
+      }
+    })();
 
     return {
       layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
       index: widgetIndex,
-      ...(isDefined(heightBehavior)
-        ? {
-            heightBehavior:
-              heightBehavior as PageLayoutWidgetVerticalListHeightBehavior,
-          }
+      ...(isDefined(normalizedHeightBehavior)
+        ? { heightBehavior: normalizedHeightBehavior }
         : {}),
     };
   }
