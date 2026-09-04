@@ -6,7 +6,7 @@ FROM node:24.19.0-alpine3.23@sha256:244cc2b53f46f9e876304391d17682b0ddae9ac33491
 
 WORKDIR /app
 
-COPY ./package.json ./yarn.lock ./.yarnrc.yml ./tsconfig.base.json ./nx.json /app/
+COPY ./package.json ./yarn.lock ./.yarnrc.yml ./tsconfig.base.json ./nx.json ./jest.preset.js /app/
 COPY ./.yarn/releases /app/.yarn/releases
 COPY ./.yarn/patches /app/.yarn/patches
 
@@ -24,7 +24,7 @@ FROM node:24.19.0-alpine3.23@sha256:244cc2b53f46f9e876304391d17682b0ddae9ac33491
 
 WORKDIR /app
 
-COPY ./package.json ./yarn.lock ./.yarnrc.yml ./tsconfig.base.json ./nx.json /app/
+COPY ./package.json ./yarn.lock ./.yarnrc.yml ./tsconfig.base.json ./nx.json ./jest.preset.js /app/
 COPY ./.yarn/releases /app/.yarn/releases
 COPY ./.yarn/patches /app/.yarn/patches
 
