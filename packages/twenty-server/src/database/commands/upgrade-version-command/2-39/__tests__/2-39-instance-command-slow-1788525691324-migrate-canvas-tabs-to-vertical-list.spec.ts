@@ -18,6 +18,15 @@ describe('MigrateCanvasTabsToVerticalListSlowInstanceCommand', () => {
     expect(query.mock.calls[0][0]).toContain(
       `CREATE TABLE IF NOT EXISTS "core"."canvasTabToVerticalListMigrationBackup"`,
     );
+    expect(query.mock.calls[0][0]).toContain(
+      `ADD COLUMN IF NOT EXISTS "pageLayoutWidgetPositionOverride" jsonb`,
+    );
+    expect(query.mock.calls[0][0]).toContain(
+      `ADD COLUMN IF NOT EXISTS "pageLayoutWidgetPositionOverrideWasMigrated" boolean`,
+    );
+    expect(query.mock.calls[0][0]).toContain(
+      `ALTER COLUMN "pageLayoutWidgetPositionOverrideWasMigrated" SET NOT NULL`,
+    );
     expect(query.mock.calls[2][0]).toContain(
       `COUNT(widget."id") FILTER (
           WHERE widget."deletedAt" IS NULL
@@ -30,7 +39,7 @@ describe('MigrateCanvasTabsToVerticalListSlowInstanceCommand', () => {
       `widget."overrides"->'position' AS "pageLayoutWidgetPositionOverride"`,
     );
     expect(query.mock.calls[2][0]).toContain(
-      `WHEN widget."overrides" ? 'position'`,
+      `WHEN widgets_to_migrate."pageLayoutWidgetPositionOverrideWasMigrated"`,
     );
     expect(query.mock.calls[2][0]).toContain(
       `widget."overrides"->>'pageLayoutTabId' = widget."pageLayoutTabId"::text`,

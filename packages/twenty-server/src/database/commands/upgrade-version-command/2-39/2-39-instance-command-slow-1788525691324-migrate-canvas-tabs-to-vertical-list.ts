@@ -16,7 +16,23 @@ const CREATE_MIGRATION_BACKUP_TABLE_QUERY = `
     "pageLayoutWidgetPosition" jsonb,
     "pageLayoutWidgetPositionOverride" jsonb,
     "pageLayoutWidgetPositionOverrideWasMigrated" boolean NOT NULL
-  )
+  );
+
+  ALTER TABLE "core"."canvasTabToVerticalListMigrationBackup"
+    ADD COLUMN IF NOT EXISTS "pageLayoutWidgetPositionOverride" jsonb;
+
+  ALTER TABLE "core"."canvasTabToVerticalListMigrationBackup"
+    ADD COLUMN IF NOT EXISTS "pageLayoutWidgetPositionOverrideWasMigrated" boolean;
+
+  ALTER TABLE "core"."canvasTabToVerticalListMigrationBackup"
+    ALTER COLUMN "pageLayoutWidgetPositionOverrideWasMigrated" SET DEFAULT false;
+
+  UPDATE "core"."canvasTabToVerticalListMigrationBackup"
+  SET "pageLayoutWidgetPositionOverrideWasMigrated" = false
+  WHERE "pageLayoutWidgetPositionOverrideWasMigrated" IS NULL;
+
+  ALTER TABLE "core"."canvasTabToVerticalListMigrationBackup"
+    ALTER COLUMN "pageLayoutWidgetPositionOverrideWasMigrated" SET NOT NULL;
 `;
 
 @RegisteredInstanceCommand('2.39.0', 1788525691324, { type: 'slow' })
@@ -105,7 +121,8 @@ export class MigrateCanvasTabsToVerticalListSlowInstanceCommand implements SlowI
       ), widgets_to_migrate AS (
         SELECT
           eligible_widgets."pageLayoutTabId",
-          eligible_widgets."pageLayoutWidgetId"
+          eligible_widgets."pageLayoutWidgetId",
+          eligible_widgets."pageLayoutWidgetPositionOverrideWasMigrated"
         FROM eligible_widgets
         WHERE eligible_widgets."pageLayoutTabId" IN (
           SELECT "pageLayoutTabId" FROM backed_up_widgets
@@ -123,11 +140,7 @@ export class MigrateCanvasTabsToVerticalListSlowInstanceCommand implements SlowI
           'heightBehavior', 'TAB_VIEWPORT'
         ),
         "overrides" = CASE
-          WHEN widget."overrides" ? 'position'
-            AND (
-              NOT COALESCE(widget."overrides" ? 'pageLayoutTabId', false)
-              OR widget."overrides"->>'pageLayoutTabId' = widget."pageLayoutTabId"::text
-            ) THEN jsonb_set(
+          WHEN widgets_to_migrate."pageLayoutWidgetPositionOverrideWasMigrated" THEN jsonb_set(
             widget."overrides",
             '{position}',
             jsonb_build_object(

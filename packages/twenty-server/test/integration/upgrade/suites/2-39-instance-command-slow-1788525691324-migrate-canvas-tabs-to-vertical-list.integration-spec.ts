@@ -283,6 +283,14 @@ describe('MigrateCanvasTabsToVerticalListSlowInstanceCommand (integration)', () 
       widgetPosition: movedCanvasWidgetPosition,
     });
 
+    await dataSource.query(`
+      CREATE TABLE "core"."canvasTabToVerticalListMigrationBackup" (
+        "pageLayoutTabId" uuid PRIMARY KEY,
+        "pageLayoutWidgetId" uuid NOT NULL UNIQUE,
+        "pageLayoutWidgetPosition" jsonb
+      )
+    `);
+
     await command.runDataMigration(dataSource);
 
     await expect(
