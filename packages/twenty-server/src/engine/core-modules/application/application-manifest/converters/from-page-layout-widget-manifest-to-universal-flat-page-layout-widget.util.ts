@@ -27,11 +27,46 @@ const getPageLayoutWidgetPosition = ({
   widgetIndex: number;
   isLegacyCanvasTab: boolean;
 }): PageLayoutWidgetPosition => {
+  if (
+    isDefined(pageLayoutWidgetManifest.heightBehavior) &&
+    (pageLayoutTabLayoutMode !== PageLayoutTabLayoutMode.VERTICAL_LIST ||
+      isLegacyCanvasTab)
+  ) {
+    const manifestLayoutMode = isLegacyCanvasTab
+      ? PageLayoutTabLayoutMode.CANVAS
+      : pageLayoutTabLayoutMode;
+
+    throw new Error(
+      `Page layout widget "${pageLayoutWidgetManifest.title}" defines heightBehavior, but its parent tab uses ${manifestLayoutMode}. heightBehavior is only supported for VERTICAL_LIST tabs.`,
+    );
+  }
+
   if (isLegacyCanvasTab) {
     return {
       layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
       index: widgetIndex,
       heightBehavior: PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+    };
+  }
+
+  if (pageLayoutTabLayoutMode === PageLayoutTabLayoutMode.VERTICAL_LIST) {
+    const legacyHeightBehavior =
+      pageLayoutWidgetManifest.position?.layoutMode ===
+      PageLayoutTabLayoutMode.VERTICAL_LIST
+        ? pageLayoutWidgetManifest.position.heightBehavior
+        : undefined;
+    const heightBehavior =
+      pageLayoutWidgetManifest.heightBehavior ?? legacyHeightBehavior;
+
+    return {
+      layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      index: widgetIndex,
+      ...(isDefined(heightBehavior)
+        ? {
+            heightBehavior:
+              heightBehavior as PageLayoutWidgetVerticalListHeightBehavior,
+          }
+        : {}),
     };
   }
 
@@ -57,11 +92,6 @@ const getPageLayoutWidgetPosition = ({
         column: 0,
         rowSpan: DEFAULT_WIDGET_SIZE.default.h,
         columnSpan: DEFAULT_WIDGET_SIZE.default.w,
-      };
-    case PageLayoutTabLayoutMode.VERTICAL_LIST:
-      return {
-        layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-        index: widgetIndex,
       };
     case PageLayoutTabLayoutMode.CANVAS:
       return { layoutMode: PageLayoutTabLayoutMode.CANVAS };

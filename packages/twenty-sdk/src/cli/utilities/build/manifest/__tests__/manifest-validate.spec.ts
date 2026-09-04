@@ -8,6 +8,7 @@ import {
 import {
   AggregateOperations,
   FieldMetadataType,
+  PageLayoutTabLayoutMode,
   RelationType,
 } from 'twenty-shared/types';
 import { manifestValidate } from '@/cli/utilities/build/manifest/manifest-validate';
@@ -655,6 +656,61 @@ describe('manifestValidate', () => {
 
       expect(result.isValid).toBe(true);
     });
+  });
+
+  describe('page layout widget height behavior validation', () => {
+    const makePageLayout = (
+      layoutMode: PageLayoutTabLayoutMode,
+    ): Manifest['pageLayouts'][number] => ({
+      universalIdentifier: 'a0a1a2a3-a4a5-4000-8000-000000000010',
+      name: 'Record page',
+      type: 'RECORD_PAGE',
+      objectUniversalIdentifier: 'a0a1a2a3-a4a5-4000-8000-000000000011',
+      tabs: [
+        {
+          universalIdentifier: 'a0a1a2a3-a4a5-4000-8000-000000000012',
+          title: 'Details',
+          position: 0,
+          layoutMode,
+          widgets: [
+            {
+              universalIdentifier: 'a0a1a2a3-a4a5-4000-8000-000000000013',
+              title: 'App',
+              type: 'FRONT_COMPONENT',
+              heightBehavior: 'TAB_VIEWPORT',
+              configuration: {
+                configurationType: 'FRONT_COMPONENT',
+                frontComponentUniversalIdentifier:
+                  'a0a1a2a3-a4a5-4000-8000-000000000014',
+              },
+            },
+          ],
+        },
+      ],
+    });
+
+    it('should accept heightBehavior on a VERTICAL_LIST tab', () => {
+      const result = manifestValidate({
+        ...validManifest,
+        pageLayouts: [makePageLayout(PageLayoutTabLayoutMode.VERTICAL_LIST)],
+      });
+
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it.each([PageLayoutTabLayoutMode.GRID, PageLayoutTabLayoutMode.CANVAS])(
+      'should reject heightBehavior on a %s tab',
+      (layoutMode) => {
+        const result = manifestValidate({
+          ...validManifest,
+          pageLayouts: [makePageLayout(layoutMode)],
+        });
+
+        expect(result.errors).toContain(
+          `Page layout widget "App" defines heightBehavior, but its parent tab "Details" uses ${layoutMode}. heightBehavior is only supported for VERTICAL_LIST tabs.`,
+        );
+      },
+    );
   });
 
   describe('timeline activity type validation', () => {

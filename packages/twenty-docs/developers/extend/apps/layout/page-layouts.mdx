@@ -16,11 +16,7 @@ A **page layout** controls how a record's detail page is arranged: which tabs ap
 Use this when you own the entire detail page — typically for a custom object you defined yourself.
 
 ```ts src/page-layouts/example-record-page-layout.ts
-import {
-  definePageLayout,
-  PageLayoutTabLayoutMode,
-  PageLayoutWidgetVerticalListHeightBehavior,
-} from 'twenty-sdk/define';
+import { definePageLayout, PageLayoutTabLayoutMode } from 'twenty-sdk/define';
 import { EXAMPLE_OBJECT_UNIVERSAL_IDENTIFIER } from '../objects/example-object';
 import { HELLO_WORLD_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER } from '../front-components/hello-world';
 
@@ -41,12 +37,7 @@ export default definePageLayout({
           universalIdentifier: 'aa4234e0-2e5f-4c02-a96a-573449e2351d',
           title: 'Hello World',
           type: 'FRONT_COMPONENT',
-          position: {
-            layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-            index: 0,
-            heightBehavior:
-              PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
-          },
+          heightBehavior: 'TAB_VIEWPORT',
           configuration: {
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier:
@@ -64,7 +55,9 @@ export default definePageLayout({
 - `type` is one of `'RECORD_INDEX'`, `'RECORD_PAGE'`, `'DASHBOARD'`, `'STANDALONE_PAGE'` or `'RECORD_FORM'`. Use `'RECORD_PAGE'` to customize the detail view of a specific object. `'RECORD_FORM'` describes the creation form of an object and holds `FORM_FIELD` widgets, each rendering a single field. Twenty provisions one `'RECORD_FORM'` layout per object with one widget per creatable field, so you rarely need to author one; it does not render record forms yet.
 - `objectUniversalIdentifier` specifies which object this layout applies to.
 - Each `tab` defines a section of the page with a `title`, `position`, and `layoutMode`: use `VERTICAL_LIST` for record pages and standalone pages, and `GRID` for dashboards. A `VERTICAL_LIST` tab stacks widgets vertically. Built-in widgets that manage their own scrolling, such as timelines, files, notes, tasks, and workflows, fill one viewport by default; fields, front components, graphs, and other fit-content widgets render at their content or configured height. A `GRID` tab always lays its widgets out as cards on a 12-column grid.
-- A widget `position` matches its tab layout mode. `VERTICAL_LIST` uses `{ layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST, index, heightBehavior? }`, while `GRID` uses `{ layoutMode: PageLayoutTabLayoutMode.GRID, row, column, rowSpan, columnSpan }`. Set `heightBehavior` to `PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT` when this specific widget should fill the remaining tab viewport and own its scrolling; use `FIT_CONTENT` to override a built-in full-height default. Only one active `TAB_VIEWPORT` widget is allowed per tab, and it must come after fit-content widgets.
+- Widgets in a `VERTICAL_LIST` tab inherit the tab's layout mode, and their order comes from the `widgets` array. Do not set `position`; set the optional top-level `heightBehavior` to `'TAB_VIEWPORT'` when a widget should fill the remaining tab viewport and own its scrolling, or to `'FIT_CONTENT'` to override a built-in full-height default. Only one active `TAB_VIEWPORT` widget is allowed per tab, and it must come after fit-content widgets.
+- `GRID` widgets continue to use `position: { layoutMode: PageLayoutTabLayoutMode.GRID, row, column, rowSpan, columnSpan }`. Top-level `heightBehavior` is only valid for `VERTICAL_LIST` tabs; using it with `GRID` or `CANVAS` is a validation error.
+- Existing manifests with an explicit `position` remain supported. For `VERTICAL_LIST`, the parent tab and widget array still determine `layoutMode` and `index`, while a nested `position.heightBehavior` is used as a legacy fallback. If both nested and top-level height behaviors are present, the top-level value takes precedence.
 - `PageLayoutTabLayoutMode.CANVAS` is deprecated. During the compatibility window, Twenty converts a legacy Canvas manifest only when the tab has exactly one widget; empty and multi-widget Canvas tabs remain unchanged because there is no unambiguous widget to make viewport-filling.
 - Set `layoutMode` explicitly. Omitting it gives you `VERTICAL_LIST` on a `STANDALONE_PAGE` and `GRID` everywhere else, which is rarely what you want on a record page.
 - Each `widget` inside a tab can render a [front component](/developers/extend/apps/layout/front-components), a relation list, or other built-in widget types.

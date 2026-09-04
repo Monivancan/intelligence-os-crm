@@ -23,11 +23,7 @@ export default definePageLayout({
           universalIdentifier: MY_CASE_STUDIES_PAGE_WIDGET_ID,
           title: 'My Case Studies',
           type: 'FRONT_COMPONENT',
-          position: {
-            layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-            index: 0,
-            heightBehavior: 'TAB_VIEWPORT',
-          },
+          heightBehavior: 'TAB_VIEWPORT',
           configuration: {
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier:

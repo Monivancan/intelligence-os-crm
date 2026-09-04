@@ -49,11 +49,7 @@ export default definePageLayout({
           universalIdentifier: DOCUMENT_PAGE_LAYOUT_WIDGET_UNIVERSAL_IDENTIFIER,
           title: 'Document preview',
           type: 'FRONT_COMPONENT',
-          position: {
-            layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-            index: 0,
-            heightBehavior: 'TAB_VIEWPORT',
-          },
+          heightBehavior: 'TAB_VIEWPORT',
           configuration: {
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier:

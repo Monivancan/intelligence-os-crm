@@ -23,11 +23,7 @@ export default definePageLayout({
           universalIdentifier: MY_PROFILE_PAGE_WIDGET_ID,
           title: 'My Profile',
           type: 'FRONT_COMPONENT',
-          position: {
-            layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-            index: 0,
-            heightBehavior: 'TAB_VIEWPORT',
-          },
+          heightBehavior: 'TAB_VIEWPORT',
           configuration: {
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier: MY_PROFILE_FRONT_COMPONENT_ID,

@@ -23,11 +23,7 @@ export default definePageLayout({
           universalIdentifier: HOW_TO_APPLY_PAGE_WIDGET_ID,
           title: 'How to apply',
           type: 'FRONT_COMPONENT',
-          position: {
-            layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-            index: 0,
-            heightBehavior: 'TAB_VIEWPORT',
-          },
+          heightBehavior: 'TAB_VIEWPORT',
           configuration: {
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier: HOW_TO_APPLY_FRONT_COMPONENT_ID,

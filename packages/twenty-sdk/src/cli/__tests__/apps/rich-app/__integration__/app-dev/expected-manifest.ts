@@ -6,7 +6,6 @@ import {
   FieldMetadataType,
   NavigationMenuItemType,
   PageLayoutTabLayoutMode,
-  PageLayoutWidgetVerticalListHeightBehavior,
   RelationOnDeleteAction,
   RelationType,
   ViewCalendarLayout,
@@ -55,10 +54,6 @@ export const EXPECTED_MANIFEST: Manifest = {
           title: 'Total Priority',
           type: 'GRAPH',
           objectUniversalIdentifier: '54b589ca-eeed-4950-a176-358418b85c05',
-          position: {
-            layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-            index: 0,
-          },
           configuration: {
             configurationType: 'AGGREGATE_CHART',
             aggregateFieldMetadataUniversalIdentifier:
@@ -70,12 +65,7 @@ export const EXPECTED_MANIFEST: Manifest = {
           universalIdentifier: 'b0b1b2b3-b4b5-4000-8000-000000000011',
           title: 'Extra Widget',
           type: 'FRONT_COMPONENT',
-          position: {
-            layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-            index: 1,
-            heightBehavior:
-              PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
-          },
+          heightBehavior: 'TAB_VIEWPORT',
           configuration: {
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier:

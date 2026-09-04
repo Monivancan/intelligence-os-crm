@@ -228,7 +228,6 @@ Mount it with a [page layout](/developers/extend/apps/layout/page-layouts). A
 import {
   definePageLayout,
   PageLayoutTabLayoutMode,
-  PageLayoutWidgetVerticalListHeightBehavior,
 } from 'twenty-sdk/define';
 
 export default definePageLayout({
@@ -246,12 +245,7 @@ export default definePageLayout({
       universalIdentifier: DOCUMENT_PAGE_LAYOUT_WIDGET_UNIVERSAL_IDENTIFIER,
       title: 'Document preview',
       type: 'FRONT_COMPONENT',
-      position: {
-        layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-        index: 0,
-        heightBehavior:
-          PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
-      },
+      heightBehavior: 'TAB_VIEWPORT',
       configuration: {
         configurationType: 'FRONT_COMPONENT',
         frontComponentUniversalIdentifier: DOCUMENT_VIEWER_FRONT_COMPONENT_UNIVERSAL_IDENTIFIER,

@@ -3,11 +3,15 @@ import { validate as uuidValidate, version as uuidVersion } from 'uuid';
 
 import {
   type Manifest,
+  type PageLayoutManifest,
+  type PageLayoutTabManifest,
   type PageLayoutWidgetManifest,
 } from 'twenty-shared/application';
 import {
   GRAPH_WIDGET_CONFIGURATION_TYPES,
   type GraphWidgetConfigurationType,
+  PageLayoutTabLayoutMode,
+  PageLayoutType,
   type PageLayoutWidgetUniversalConfiguration,
   RelationType,
 } from 'twenty-shared/types';
@@ -156,6 +160,75 @@ const validateGraphWidgets = (
   return errors;
 };
 
+const getPageLayoutTabLayoutMode = ({
+  pageLayoutTab,
+  pageLayoutType,
+}: {
+  pageLayoutTab: PageLayoutTabManifest;
+  pageLayoutType: PageLayoutManifest['type'] | undefined;
+}): PageLayoutTabLayoutMode =>
+  pageLayoutTab.layoutMode ??
+  (pageLayoutType === PageLayoutType.STANDALONE_PAGE
+    ? PageLayoutTabLayoutMode.VERTICAL_LIST
+    : PageLayoutTabLayoutMode.GRID);
+
+const validatePageLayoutTabWidgetHeightBehaviors = ({
+  pageLayoutTab,
+  pageLayoutType,
+}: {
+  pageLayoutTab: PageLayoutTabManifest;
+  pageLayoutType: PageLayoutManifest['type'] | undefined;
+}): string[] => {
+  const layoutMode = getPageLayoutTabLayoutMode({
+    pageLayoutTab,
+    pageLayoutType,
+  });
+
+  if (layoutMode === PageLayoutTabLayoutMode.VERTICAL_LIST) {
+    return [];
+  }
+
+  return (pageLayoutTab.widgets ?? [])
+    .filter((widget) => isDefined(widget.heightBehavior))
+    .map(
+      (widget) =>
+        `Page layout widget "${widget.title}" defines heightBehavior, but its parent tab "${pageLayoutTab.title}" uses ${layoutMode}. heightBehavior is only supported for VERTICAL_LIST tabs.`,
+    );
+};
+
+const validatePageLayoutWidgetHeightBehaviors = (
+  manifest: Pick<Manifest, 'pageLayouts' | 'pageLayoutTabs'>,
+): string[] => {
+  const pageLayoutTypeByUniversalIdentifier = new Map(
+    manifest.pageLayouts.map((pageLayout) => [
+      pageLayout.universalIdentifier,
+      pageLayout.type,
+    ]),
+  );
+
+  const nestedTabErrors = manifest.pageLayouts.flatMap((pageLayout) =>
+    (pageLayout.tabs ?? []).flatMap((pageLayoutTab) =>
+      validatePageLayoutTabWidgetHeightBehaviors({
+        pageLayoutTab,
+        pageLayoutType: pageLayout.type,
+      }),
+    ),
+  );
+
+  const standaloneTabErrors = manifest.pageLayoutTabs.flatMap((pageLayoutTab) =>
+    validatePageLayoutTabWidgetHeightBehaviors({
+      pageLayoutTab,
+      pageLayoutType: isDefined(pageLayoutTab.pageLayoutUniversalIdentifier)
+        ? pageLayoutTypeByUniversalIdentifier.get(
+            pageLayoutTab.pageLayoutUniversalIdentifier,
+          )
+        : undefined,
+    }),
+  );
+
+  return [...nestedTabErrors, ...standaloneTabErrors];
+};
+
 const invalidUniversalIdentifierVersions = (
   identifiers: string[],
 ): string[] => {
@@ -213,6 +286,8 @@ export const manifestValidate = (manifest: Manifest) => {
   ];
 
   errors.push(...validateRelationFields(allFields));
+
+  errors.push(...validatePageLayoutWidgetHeightBehaviors(manifest));
 
   errors.push(...validateGraphWidgets(collectPageLayoutWidgets(manifest)));
 

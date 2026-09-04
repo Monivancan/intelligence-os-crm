@@ -140,10 +140,7 @@ describe('fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget', () => {
     });
   });
 
-  it.each([
-    { layoutMode: PageLayoutTabLayoutMode.CANVAS },
-    { layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST, index: 2 },
-  ])('should default position for $layoutMode tabs', (expectedPosition) => {
+  it('should derive a vertical-list widget index from its array order', () => {
     const result = fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget({
       pageLayoutWidgetManifest: {
         universalIdentifier: 'widget-uuid-4',
@@ -152,14 +149,184 @@ describe('fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget', () => {
         configuration: { configurationType: 'VIEW' },
       },
       pageLayoutTabUniversalIdentifier,
-      pageLayoutTabLayoutMode: expectedPosition.layoutMode,
+      pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
       widgetIndex: 2,
       applicationUniversalIdentifier,
       now,
     });
 
-    expect(result.position).toEqual(expectedPosition);
+    expect(result.position).toEqual({
+      layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      index: 2,
+    });
   });
+
+  it('should default a Canvas widget to a Canvas position', () => {
+    const result = fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget({
+      pageLayoutWidgetManifest: {
+        universalIdentifier: 'widget-uuid-canvas-without-position',
+        title: 'Canvas Widget',
+        type: WidgetType.VIEW,
+        configuration: { configurationType: 'VIEW' },
+      },
+      pageLayoutTabUniversalIdentifier,
+      pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.CANVAS,
+      applicationUniversalIdentifier,
+      now,
+    });
+
+    expect(result.position).toEqual({
+      layoutMode: PageLayoutTabLayoutMode.CANVAS,
+    });
+  });
+
+  it('should omit vertical-list heightBehavior when it is not supplied', () => {
+    const result = fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget({
+      pageLayoutWidgetManifest: {
+        universalIdentifier: 'widget-uuid-without-height-behavior',
+        title: 'Fit Content Widget',
+        type: WidgetType.VIEW,
+        configuration: { configurationType: 'VIEW' },
+      },
+      pageLayoutTabUniversalIdentifier,
+      pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      applicationUniversalIdentifier,
+      now,
+    });
+
+    expect(result.position).not.toHaveProperty('heightBehavior');
+  });
+
+  it('should propagate a top-level vertical-list height behavior', () => {
+    const result = fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget({
+      pageLayoutWidgetManifest: {
+        universalIdentifier: 'widget-uuid-5',
+        title: 'Viewport Widget',
+        type: WidgetType.FRONT_COMPONENT,
+        heightBehavior: 'TAB_VIEWPORT',
+        configuration: {
+          configurationType: 'FRONT_COMPONENT',
+          frontComponentUniversalIdentifier: 'front-component-uuid-1',
+        },
+      },
+      pageLayoutTabUniversalIdentifier,
+      pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      widgetIndex: 1,
+      applicationUniversalIdentifier,
+      now,
+    });
+
+    expect(result.position).toEqual({
+      layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      index: 1,
+      heightBehavior: PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+    });
+  });
+
+  it('should preserve a legacy explicit vertical-list height behavior while deriving layout mode and index', () => {
+    const result = fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget({
+      pageLayoutWidgetManifest: {
+        universalIdentifier: 'widget-uuid-6',
+        title: 'Legacy Positioned Widget',
+        type: WidgetType.FRONT_COMPONENT,
+        position: {
+          layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+          index: 99,
+          heightBehavior:
+            PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+        },
+        configuration: {
+          configurationType: 'FRONT_COMPONENT',
+          frontComponentUniversalIdentifier: 'front-component-uuid-1',
+        },
+      },
+      pageLayoutTabUniversalIdentifier,
+      pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      widgetIndex: 1,
+      applicationUniversalIdentifier,
+      now,
+    });
+
+    expect(result.position).toEqual({
+      layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      index: 1,
+      heightBehavior: PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+    });
+  });
+
+  it('should prefer top-level heightBehavior over the legacy nested value', () => {
+    const result = fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget({
+      pageLayoutWidgetManifest: {
+        universalIdentifier: 'widget-uuid-7',
+        title: 'Migrating Widget',
+        type: WidgetType.FRONT_COMPONENT,
+        heightBehavior: 'FIT_CONTENT',
+        position: {
+          layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+          index: 0,
+          heightBehavior:
+            PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+        },
+        configuration: {
+          configurationType: 'FRONT_COMPONENT',
+          frontComponentUniversalIdentifier: 'front-component-uuid-1',
+        },
+      },
+      pageLayoutTabUniversalIdentifier,
+      pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      applicationUniversalIdentifier,
+      now,
+    });
+
+    expect(result.position).toEqual({
+      layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      index: 0,
+      heightBehavior: PageLayoutWidgetVerticalListHeightBehavior.FIT_CONTENT,
+    });
+  });
+
+  it.each([
+    {
+      pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.GRID,
+      isLegacyCanvasTab: false,
+      manifestLayoutMode: PageLayoutTabLayoutMode.GRID,
+    },
+    {
+      pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.CANVAS,
+      isLegacyCanvasTab: false,
+      manifestLayoutMode: PageLayoutTabLayoutMode.CANVAS,
+    },
+    {
+      pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      isLegacyCanvasTab: true,
+      manifestLayoutMode: PageLayoutTabLayoutMode.CANVAS,
+    },
+  ])(
+    'should reject top-level heightBehavior on a $manifestLayoutMode tab',
+    ({ pageLayoutTabLayoutMode, isLegacyCanvasTab, manifestLayoutMode }) => {
+      expect(() =>
+        fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget({
+          pageLayoutWidgetManifest: {
+            universalIdentifier: 'widget-uuid-invalid',
+            title: 'Invalid Widget',
+            type: WidgetType.FRONT_COMPONENT,
+            heightBehavior: 'TAB_VIEWPORT',
+            configuration: {
+              configurationType: 'FRONT_COMPONENT',
+              frontComponentUniversalIdentifier: 'front-component-uuid-1',
+            },
+          },
+          pageLayoutTabUniversalIdentifier,
+          pageLayoutTabLayoutMode,
+          isLegacyCanvasTab,
+          applicationUniversalIdentifier,
+          now,
+        }),
+      ).toThrow(
+        `Page layout widget "Invalid Widget" defines heightBehavior, but its parent tab uses ${manifestLayoutMode}. heightBehavior is only supported for VERTICAL_LIST tabs.`,
+      );
+    },
+  );
 
   it('should normalize a legacy Canvas widget to TAB_VIEWPORT even when it has an explicit Canvas position', () => {
     const result = fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget({

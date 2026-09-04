@@ -93,7 +93,6 @@ export default defineFrontComponent({
 import {
   definePageLayout,
   PageLayoutTabLayoutMode,
-  PageLayoutWidgetVerticalListHeightBehavior,
 } from 'twenty-sdk/define';
 
 import {
@@ -117,12 +116,7 @@ export default definePageLayout({
           universalIdentifier: '18ce05bb-ee3c-4332-80a7-f8fb84f7f70a',
           title: 'Mission Control',
           type: 'FRONT_COMPONENT',
-          position: {
-            layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
-            index: 0,
-            heightBehavior:
-              PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
-          },
+          heightBehavior: 'TAB_VIEWPORT',
           configuration: {
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier:
@@ -207,7 +201,7 @@ This section only calls out the fields that matter for standalone pages. Use `la
 - Use `type: 'STANDALONE_PAGE'`.
 - Do not set `objectUniversalIdentifier`; standalone pages are not record scoped.
 - Define at least one tab. Use one tab unless the page needs real top-level modes.
-- Use `PageLayoutTabLayoutMode.VERTICAL_LIST`; put the `FRONT_COMPONENT` last and set its position `heightBehavior` to `PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT`.
+- Use `PageLayoutTabLayoutMode.VERTICAL_LIST`; widgets inherit the tab's layout mode and follow their order in the `widgets` array. Put the `FRONT_COMPONENT` last and set its top-level `heightBehavior` to `'TAB_VIEWPORT'`.
 - Use a `FRONT_COMPONENT` widget with `configurationType: 'FRONT_COMPONENT'` and `frontComponentUniversalIdentifier`.
 
 `defineFrontComponent` owns the actual page experience:
