@@ -28,6 +28,7 @@ import './instrument';
 import { settings } from './engine/constants/settings';
 import { enableValidationMetadataCache } from './utils/enable-validation-metadata-cache.util';
 import { generateFrontConfig } from './utils/generate-front-config';
+import { buildContentSecurityPolicy } from './utils/build-content-security-policy.util';
 
 const bootstrap = async () => {
   enableValidationMetadataCache();
@@ -69,6 +70,11 @@ const bootstrap = async () => {
   app.set('trust proxy', trustProxy);
 
   applyCredentialedCors(app, twentyConfigService);
+
+  app.use((_request, response, next) => {
+    response.setHeader('Content-Security-Policy', buildContentSecurityPolicy());
+    next();
+  });
 
   app.use(session(getSessionStorageOptions(twentyConfigService)));
 

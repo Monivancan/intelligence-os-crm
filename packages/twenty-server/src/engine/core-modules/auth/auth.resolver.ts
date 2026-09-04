@@ -752,27 +752,33 @@ export class AuthResolver {
     { ssoExchangeToken }: GetAuthTokensFromSsoExchangeTokenInput,
     @Context() context: { req: Request },
   ): Promise<AuthTokens> {
-    const { userId, authProvider } =
+    const { userId, authProvider, workspaceId } =
       await this.ssoExchangeTokenService.validateAndConsumeSsoExchangeTokenOrThrow(
         ssoExchangeToken,
       );
 
-    const authTokens = {
-      tokens: {
-        accessOrWorkspaceAgnosticToken:
-          await this.workspaceAgnosticTokenService.generateWorkspaceAgnosticToken(
-            {
+    const authTokens = isDefined(workspaceId)
+      ? await this.authService.verify(
+          (await this.userService.findUserByIdOrThrow(userId)).email,
+          workspaceId,
+          authProvider,
+        )
+      : {
+          tokens: {
+            accessOrWorkspaceAgnosticToken:
+              await this.workspaceAgnosticTokenService.generateWorkspaceAgnosticToken(
+                {
+                  userId,
+                  authProvider,
+                },
+              ),
+            refreshToken: await this.refreshTokenService.generateRefreshToken({
               userId,
               authProvider,
-            },
-          ),
-        refreshToken: await this.refreshTokenService.generateRefreshToken({
-          userId,
-          authProvider,
-          targetedTokenType: JwtTokenTypeEnum.WORKSPACE_AGNOSTIC,
-        }),
-      },
-    };
+              targetedTokenType: JwtTokenTypeEnum.WORKSPACE_AGNOSTIC,
+            }),
+          },
+        };
 
     await this.userSessionService.issueSessionForTokenPair({
       tokenPair: authTokens.tokens,

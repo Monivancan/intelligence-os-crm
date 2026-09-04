@@ -44,9 +44,11 @@ export class SsoExchangeTokenService {
   async generateSsoExchangeToken({
     userId,
     authProvider,
+    workspaceId,
   }: {
     userId: string;
     authProvider: AuthProviderEnum;
+    workspaceId?: string;
   }): Promise<AuthToken> {
     const expiresIn = this.twentyConfigService.get(
       'SHORT_TERM_TOKEN_EXPIRES_IN',
@@ -58,6 +60,7 @@ export class SsoExchangeTokenService {
     await this.appTokenRepository.save(
       this.appTokenRepository.create({
         userId,
+        workspaceId,
         expiresAt,
         type: AppTokenType.SsoExchangeToken,
         value: hashSsoExchangeToken(plainToken),
@@ -73,7 +76,11 @@ export class SsoExchangeTokenService {
 
   async validateAndConsumeSsoExchangeTokenOrThrow(
     ssoExchangeToken: string,
-  ): Promise<{ userId: string; authProvider: AuthProviderEnum }> {
+  ): Promise<{
+    userId: string;
+    authProvider: AuthProviderEnum;
+    workspaceId?: string;
+  }> {
     const appToken = await this.appTokenRepository.findOneBy({
       value: hashSsoExchangeToken(ssoExchangeToken),
       type: AppTokenType.SsoExchangeToken,
@@ -113,6 +120,9 @@ export class SsoExchangeTokenService {
     return {
       userId: appToken.userId,
       authProvider: appToken.context.authProvider,
+      ...(isDefined(appToken.workspaceId)
+        ? { workspaceId: appToken.workspaceId }
+        : {}),
     };
   }
 }

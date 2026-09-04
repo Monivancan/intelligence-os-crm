@@ -34,12 +34,14 @@ export const useRedeemSsoExchangeToken = () => {
         }
 
         markSessionActive();
+        return true;
       } catch (error: unknown) {
         enqueueErrorSnackBar(
           CombinedGraphQLErrors.is(error)
             ? { apolloError: error }
             : { message: error instanceof Error ? error.message : undefined },
         );
+        return false;
       } finally {
         setIsAppEffectRedirectEnabled(true);
       }

@@ -12,6 +12,7 @@ import { currentWorkspaceState } from '@/auth/states/currentWorkspaceState';
 import { returnToPathState } from '@/auth/states/returnToPathState';
 import { isValidReturnToPath } from '@/auth/utils/isValidReturnToPath';
 import { appVersionState } from '@/client-config/states/appVersionState';
+import { isHostedInIosEmbed } from '@/domain-manager/utils/iosEmbedHost';
 import { useSnackBar } from '@/ui/feedback/snack-bar-manager/hooks/useSnackBar';
 import { useAtomState } from '@/ui/utilities/state/jotai/hooks/useAtomState';
 import { useAtomStateValue } from '@/ui/utilities/state/jotai/hooks/useAtomStateValue';
@@ -72,6 +73,11 @@ export const useApolloFactory = (options: Partial<Options> = {}) => {
         setCurrentWorkspaceMember(null);
         setCurrentWorkspace(null);
         setCurrentUserWorkspace(null);
+        // IOS CRM iframe: /welcome renders session-expired, never SignInUp form.
+        if (isHostedInIosEmbed()) {
+          navigate(AppPath.SignInUp);
+          return;
+        }
         if (
           ![...ONGOING_USER_CREATION_PATHS, AppPath.ResetPassword].some(
             (path) => isMatchingLocation(locationRef.current, path),

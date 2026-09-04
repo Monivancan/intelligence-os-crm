@@ -6,7 +6,7 @@ FROM node:24.19.0-alpine3.23@sha256:244cc2b53f46f9e876304391d17682b0ddae9ac33491
 
 WORKDIR /app
 
-COPY ./package.json ./yarn.lock ./.yarnrc.yml ./tsconfig.base.json ./nx.json /app/
+COPY ./package.json ./yarn.lock ./.yarnrc.yml ./tsconfig.base.json ./nx.json ./jest.preset.js /app/
 COPY ./.yarn/releases /app/.yarn/releases
 COPY ./.yarn/patches /app/.yarn/patches
 
@@ -24,7 +24,7 @@ FROM node:24.19.0-alpine3.23@sha256:244cc2b53f46f9e876304391d17682b0ddae9ac33491
 
 WORKDIR /app
 
-COPY ./package.json ./yarn.lock ./.yarnrc.yml ./tsconfig.base.json ./nx.json /app/
+COPY ./package.json ./yarn.lock ./.yarnrc.yml ./tsconfig.base.json ./nx.json ./jest.preset.js /app/
 COPY ./.yarn/releases /app/.yarn/releases
 COPY ./.yarn/patches /app/.yarn/patches
 
@@ -49,6 +49,14 @@ RUN npx nx run twenty-server:lingui:extract && \
     npx nx run twenty-emails:lingui:extract && \
     npx nx run twenty-emails:lingui:compile
 
+RUN npx nx build twenty-shared --skip-nx-cache && \
+    npx jest \
+      packages/twenty-server/src/engine/core-modules/auth/services/ios-session-exchange.service.spec.ts \
+      packages/twenty-server/src/engine/core-modules/auth/token/services/sso-exchange-token.service.spec.ts \
+      packages/twenty-server/src/engine/core-modules/auth/utils/__tests__/verify-ios-session-assertion.util.spec.ts \
+      packages/twenty-server/src/utils/__tests__/build-content-security-policy.util.spec.ts \
+      --config=packages/twenty-server/jest.config.mjs --runInBand
+
 RUN npx nx run twenty-server:build
 
 # Clean server build output (type declarations and compiled tests are not needed at runtime;
@@ -69,6 +77,13 @@ COPY ./packages/twenty-sdk /app/packages/twenty-sdk
 COPY ./packages/twenty-client-sdk /app/packages/twenty-client-sdk
 RUN npx nx run twenty-front:lingui:extract && \
     npx nx run twenty-front:lingui:compile
+RUN npx nx build twenty-shared --skip-nx-cache && \
+    npx jest \
+      packages/twenty-front/src/modules/auth/components/__tests__/IframedSessionExpired.test.tsx \
+      packages/twenty-front/src/modules/auth/hooks/__tests__/useRedeemSsoExchangeToken.test.ts \
+      packages/twenty-front/src/modules/auth/sign-in-up/components/internal/__tests__/SignInUpSsoExchangeTokenEffect.test.tsx \
+      packages/twenty-front/src/modules/domain-manager/utils/__tests__/iosEmbedHost.test.ts \
+      --config=packages/twenty-front/jest.config.mjs --runInBand
 # To skip the memory-intensive frontend build, pre-build on the host:
 #   npx nx build twenty-front
 # The check below will use packages/twenty-front/build/ if it already exists.
@@ -130,7 +145,7 @@ COPY --chown=1000 --from=twenty-server-build /app/packages/twenty-emails/dist /a
 COPY --chown=1000 --from=twenty-server-build /app/packages/twenty-client-sdk/package.json /app/packages/twenty-client-sdk/
 COPY --chown=1000 --from=twenty-server-build /app/packages/twenty-client-sdk/dist /app/packages/twenty-client-sdk/dist
 
-LABEL org.opencontainers.image.source=https://github.com/twentyhq/twenty
+LABEL org.opencontainers.image.source=https://github.com/Monivancan/intelligence-os-crm
 LABEL org.opencontainers.image.description="Twenty server image (no frontend)."
 
 # Remove unused, unpatchable components the scanner flags (none are executed at

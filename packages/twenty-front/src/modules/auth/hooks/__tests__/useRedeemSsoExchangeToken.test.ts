@@ -85,9 +85,11 @@ describe('useRedeemSsoExchangeToken', () => {
   it('should mark the session active once the exchange succeeds', async () => {
     const { result } = renderHooks();
 
-    await result.current.redeemSsoExchangeToken('sso-exchange-token');
+    const didRedeem =
+      await result.current.redeemSsoExchangeToken('sso-exchange-token');
 
     expect(jotaiStore.get(isCookieAuthActiveState.atom)).toBe(true);
+    expect(didRedeem).toBe(true);
   });
 
   it('should leave the session inactive when the exchange fails', async () => {
@@ -97,9 +99,11 @@ describe('useRedeemSsoExchangeToken', () => {
 
     const { result } = renderHooks();
 
-    await result.current.redeemSsoExchangeToken('sso-exchange-token');
+    const didRedeem =
+      await result.current.redeemSsoExchangeToken('sso-exchange-token');
 
     expect(jotaiStore.get(isCookieAuthActiveState.atom)).toBe(false);
+    expect(didRedeem).toBe(false);
   });
 
   it('should snackbar when redemption fails', async () => {
