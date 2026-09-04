@@ -1,4 +1,3 @@
-import { config } from 'dotenv';
 import { isDefined } from 'twenty-shared/utils';
 import { DataSource } from 'typeorm';
 import { v4 } from 'uuid';
@@ -6,11 +5,6 @@ import { v4 } from 'uuid';
 import { MigrateCanvasTabsToVerticalListSlowInstanceCommand } from 'src/database/commands/upgrade-version-command/2-39/2-39-instance-command-slow-1788525691324-migrate-canvas-tabs-to-vertical-list';
 
 jest.useRealTimers();
-
-config({
-  path: process.env.NODE_ENV === 'test' ? '.env.test' : '.env',
-  override: true,
-});
 
 type SeededTab = {
   tabId: string;
