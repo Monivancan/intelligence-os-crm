@@ -4588,6 +4588,7 @@ export type PageLayoutTab = {
 };
 
 export enum PageLayoutTabLayoutMode {
+  /** @deprecated Use VERTICAL_LIST with TAB_VIEWPORT widget height behavior. */
   CANVAS = 'CANVAS',
   GRID = 'GRID',
   VERTICAL_LIST = 'VERTICAL_LIST'
