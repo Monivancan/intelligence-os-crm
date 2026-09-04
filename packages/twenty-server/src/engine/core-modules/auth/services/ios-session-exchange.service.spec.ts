@@ -6,7 +6,7 @@ const SECRET = 'test-ios-session-exchange-secret-that-is-long-enough';
 const IOS_WORKSPACE_ID = '6374e4dc-e224-479b-8a3d-3c12df4a5d89';
 const TWENTY_WORKSPACE_ID = '97bd8cac-6af7-4c96-93cd-49feae6b0de8';
 
-const buildAssertion = () => {
+const buildAssertion = (overrides: Record<string, unknown> = {}) => {
   const now = Math.floor(Date.now() / 1000);
 
   return jwt.sign(
@@ -21,6 +21,7 @@ const buildAssertion = () => {
       exp: now + 60,
       iss: 'intelligence-os',
       aud: 'twenty-crm',
+      ...overrides,
     },
     SECRET,
     {
@@ -31,12 +32,14 @@ const buildAssertion = () => {
 
 const setup = ({
   mappings = { [IOS_WORKSPACE_ID]: TWENTY_WORKSPACE_ID },
+  existingMembership = true,
+  workspaceDefaultRoleId = 'member-role-id',
 } = {}) => {
   const redisSet = jest.fn().mockResolvedValue('OK');
   const workspaceRepository = {
     findOneBy: jest.fn().mockResolvedValue({
       id: TWENTY_WORKSPACE_ID,
-      defaultRoleId: 'member-role-id',
+      defaultRoleId: workspaceDefaultRoleId,
     }),
   };
   const userRepository = {
@@ -51,7 +54,13 @@ const setup = ({
     save: jest.fn(),
   };
   const userWorkspaceRepository = {
-    findOne: jest.fn().mockResolvedValue({ id: 'user-workspace-id' }),
+    findOne: jest
+      .fn()
+      .mockResolvedValueOnce(
+        existingMembership ? { id: 'user-workspace-id' } : null,
+      )
+      .mockResolvedValue({ id: 'user-workspace-id' }),
+    findOneOrFail: jest.fn().mockResolvedValue({ id: 'user-workspace-id' }),
   };
   const ssoExchangeTokenService = {
     generateSsoExchangeToken: jest.fn().mockResolvedValue({
@@ -63,6 +72,22 @@ const setup = ({
     getRoleByUniversalIdentifier: jest
       .fn()
       .mockResolvedValue({ id: 'admin-role-id' }),
+    getWorkspaceRoles: jest.fn().mockResolvedValue([
+      {
+        id: 'admin-role-id',
+        label: 'Admin',
+        universalIdentifier: '20202020-02c2-43f2-b94d-cab1f2b532eb',
+        canBeAssignedToUsers: true,
+        canUpdateAllSettings: true,
+      },
+      {
+        id: 'member-role-id',
+        label: 'Member',
+        universalIdentifier: 'member-role-universal-id',
+        canBeAssignedToUsers: true,
+        canUpdateAllSettings: false,
+      },
+    ]),
   };
   const userRoleService = {
     assignRoleToManyUserWorkspace: jest.fn(),
@@ -71,6 +96,12 @@ const setup = ({
     loadWorkspaceMember: jest
       .fn()
       .mockResolvedValue({ id: 'workspace-member-id' }),
+  };
+  const userWorkspaceService = {
+    addUserToWorkspaceIfUserNotInWorkspace: jest.fn(),
+  };
+  const onboardingService = {
+    completeOnboardingProfileStepIfNameProvided: jest.fn(),
   };
 
   const service = new IosSessionExchangeService(
@@ -87,7 +118,8 @@ const setup = ({
     workspaceRepository as never,
     userRepository as never,
     userWorkspaceRepository as never,
-    { addUserToWorkspaceIfUserNotInWorkspace: jest.fn() } as never,
+    userWorkspaceService as never,
+    onboardingService as never,
     userService as never,
     roleService as never,
     userRoleService as never,
@@ -96,10 +128,12 @@ const setup = ({
 
   return {
     redisSet,
+    onboardingService,
     roleService,
     service,
     ssoExchangeTokenService,
     userRoleService,
+    userWorkspaceService,
     workspaceRepository,
   };
 };
@@ -163,5 +197,59 @@ describe('IosSessionExchangeService', () => {
       service.exchange(`Bearer ${buildAssertion()}`),
     ).rejects.toThrow('IOS workspace is not mapped to Twenty');
     expect(workspaceRepository.findOneBy).not.toHaveBeenCalled();
+  });
+
+  it('adds a first-time member with the canonical Member role and completes profile onboarding', async () => {
+    const { onboardingService, service, userWorkspaceService } = setup({
+      existingMembership: false,
+      workspaceDefaultRoleId: 'admin-role-id',
+    });
+
+    await expect(
+      service.exchange(`Bearer ${buildAssertion({ role: 'member' })}`),
+    ).resolves.toMatchObject({
+      external_workspace_id: TWENTY_WORKSPACE_ID,
+      external_member_id: 'workspace-member-id',
+    });
+
+    expect(
+      userWorkspaceService.addUserToWorkspaceIfUserNotInWorkspace,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'twenty-user-id' }),
+      expect.objectContaining({ id: TWENTY_WORKSPACE_ID }),
+      'member-role-id',
+    );
+    expect(
+      onboardingService.completeOnboardingProfileStepIfNameProvided,
+    ).toHaveBeenCalledWith({
+      userId: 'twenty-user-id',
+      workspaceId: TWENTY_WORKSPACE_ID,
+      firstName: 'IOS',
+      lastName: 'Owner',
+    });
+  });
+
+  it('fails closed when the canonical non-admin Member role is unavailable', async () => {
+    const { roleService, service, userWorkspaceService } = setup({
+      existingMembership: false,
+      workspaceDefaultRoleId: 'admin-role-id',
+    });
+
+    roleService.getWorkspaceRoles.mockResolvedValue([
+      {
+        id: 'admin-role-id',
+        label: 'Member',
+        universalIdentifier: '20202020-02c2-43f2-b94d-cab1f2b532eb',
+        canBeAssignedToUsers: true,
+        canUpdateAllSettings: true,
+      },
+    ]);
+
+    await expect(
+      service.exchange(`Bearer ${buildAssertion({ role: 'member' })}`),
+    ).rejects.toThrow('Twenty workspace Member role is unavailable');
+    expect(
+      userWorkspaceService.addUserToWorkspaceIfUserNotInWorkspace,
+    ).not.toHaveBeenCalled();
   });
 });

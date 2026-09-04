@@ -14,6 +14,7 @@ import {
   type IosSessionAssertion,
   verifyIosSessionAssertion,
 } from 'src/engine/core-modules/auth/utils/verify-ios-session-assertion.util';
+import { OnboardingService } from 'src/engine/core-modules/onboarding/onboarding.service';
 import { RedisClientService } from 'src/engine/core-modules/redis-client/redis-client.service';
 import { TwentyConfigService } from 'src/engine/core-modules/twenty-config/twenty-config.service';
 import { UserWorkspaceEntity } from 'src/engine/core-modules/user-workspace/user-workspace.entity';
@@ -22,6 +23,7 @@ import { UserService } from 'src/engine/core-modules/user/services/user.service'
 import { UserEntity } from 'src/engine/core-modules/user/user.entity';
 import { AuthProviderEnum } from 'src/engine/core-modules/workspace/types/workspace.type';
 import { WorkspaceEntity } from 'src/engine/core-modules/workspace/workspace.entity';
+import { MEMBER_ROLE_LABEL } from 'src/engine/metadata-modules/permissions/constants/member-role-label.constants';
 import { RoleService } from 'src/engine/metadata-modules/role/role.service';
 import { UserRoleService } from 'src/engine/metadata-modules/user-role/user-role.service';
 import { STANDARD_ROLE } from 'src/engine/workspace-manager/twenty-standard-application/constants/standard-role.constant';
@@ -38,6 +40,7 @@ export class IosSessionExchangeService {
     @InjectRepository(UserWorkspaceEntity)
     private readonly userWorkspaceRepository: Repository<UserWorkspaceEntity>,
     private readonly userWorkspaceService: UserWorkspaceService,
+    private readonly onboardingService: OnboardingService,
     private readonly userService: UserService,
     private readonly roleService: RoleService,
     private readonly userRoleService: UserRoleService,
@@ -86,11 +89,19 @@ export class IosSessionExchangeService {
     });
 
     if (!isDefined(userWorkspace)) {
+      const [firstName, ...lastNameParts] = assertion.name.trim().split(/\s+/);
+
       await this.userWorkspaceService.addUserToWorkspaceIfUserNotInWorkspace(
         user,
         workspace,
         roleId,
       );
+      await this.onboardingService.completeOnboardingProfileStepIfNameProvided({
+        userId: user.id,
+        workspaceId: workspace.id,
+        firstName,
+        lastName: lastNameParts.join(' '),
+      });
       userWorkspace = await this.userWorkspaceRepository.findOneOrFail({
         where: { userId: user.id, workspaceId: workspace.id },
       });
@@ -167,7 +178,10 @@ export class IosSessionExchangeService {
   }
 
   private async consumeAssertionOnce(jti: string, expiresAt: number) {
-    const ttlSeconds = Math.max(1, expiresAt - Math.floor(Date.now() / 1000));
+    const ttlSeconds = Math.min(
+      60,
+      Math.max(1, expiresAt - Math.floor(Date.now() / 1000)),
+    );
     const result = await this.redisClientService
       .getClient()
       .set(`ios:session-exchange:jti:${jti}`, '1', 'EX', ttlSeconds, 'NX');
@@ -209,13 +223,24 @@ export class IosSessionExchangeService {
     isAdmin: boolean;
   }) {
     if (!isAdmin) {
-      if (!isDefined(workspace.defaultRoleId)) {
+      const memberRole = (
+        await this.roleService.getWorkspaceRoles(workspace.id)
+      ).find(
+        (role) =>
+          role.label === MEMBER_ROLE_LABEL &&
+          role.universalIdentifier !==
+            STANDARD_ROLE.admin.universalIdentifier &&
+          role.canBeAssignedToUsers === true &&
+          role.canUpdateAllSettings === false,
+      );
+
+      if (!isDefined(memberRole)) {
         throw new NotFoundException(
-          'Twenty workspace default role is unavailable',
+          'Twenty workspace Member role is unavailable',
         );
       }
 
-      return workspace.defaultRoleId;
+      return memberRole.id;
     }
 
     const adminRole = await this.roleService.getRoleByUniversalIdentifier({

@@ -50,6 +50,8 @@ describe('verifyIosSessionAssertion', () => {
     ['role', { role: 'super-admin' }],
     ['lifetime', { exp: NOW + 61 }],
     ['workspace id', { ios_workspace_id: 'not-a-uuid' }],
+    ['future issued-at time', { iat: NOW + 6, exp: NOW + 60 }],
+    ['expiry beyond the replay window', { iat: NOW + 5, exp: NOW + 65 }],
   ])('rejects an invalid %s', (_label, overrides) => {
     expect(() =>
       verifyIosSessionAssertion(signAssertion(overrides), SECRET, NOW),

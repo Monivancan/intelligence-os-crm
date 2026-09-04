@@ -12,6 +12,9 @@ export type IosSessionAssertion = {
   exp: number;
 };
 
+const IOS_SESSION_CLOCK_TOLERANCE_SECONDS = 5;
+const IOS_SESSION_MAX_AGE_SECONDS = 60;
+
 const isIosSessionAssertion = (
   payload: jwt.JwtPayload,
 ): payload is jwt.JwtPayload & IosSessionAssertion =>
@@ -31,7 +34,7 @@ const isIosSessionAssertion = (
   typeof payload.iat === 'number' &&
   typeof payload.exp === 'number' &&
   payload.exp > payload.iat &&
-  payload.exp - payload.iat <= 60;
+  payload.exp - payload.iat <= IOS_SESSION_MAX_AGE_SECONDS;
 
 export const verifyIosSessionAssertion = (
   token: string,
@@ -46,7 +49,13 @@ export const verifyIosSessionAssertion = (
       clockTimestamp: nowInSeconds,
     });
 
-    if (typeof payload === 'string' || !isIosSessionAssertion(payload)) {
+    if (
+      typeof payload === 'string' ||
+      !isIosSessionAssertion(payload) ||
+      payload.iat < nowInSeconds - IOS_SESSION_MAX_AGE_SECONDS ||
+      payload.iat > nowInSeconds + IOS_SESSION_CLOCK_TOLERANCE_SECONDS ||
+      payload.exp > nowInSeconds + IOS_SESSION_MAX_AGE_SECONDS
+    ) {
       throw new Error();
     }
 
