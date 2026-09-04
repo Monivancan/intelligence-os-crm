@@ -1,5 +1,12 @@
 steps:
   - name: gcr.io/cloud-builders/docker
+    id: validate-tag
+    entrypoint: bash
+    args:
+      - packages/twenty-docker/scripts/validate-ios-crm-image-tag.sh
+      - ${_TAG}
+
+  - name: gcr.io/cloud-builders/docker
     args:
       - build
       - --target
@@ -22,4 +29,4 @@ options:
 
 substitutions:
   _IMAGE: asia-south1-docker.pkg.dev/speedy-rhino-495614-r2/intelligence-os-crm/twenty
-  _TAG: required
+  _TAG: INVALID_GIT_SHA

@@ -3,6 +3,7 @@ import { type JSX, createContext } from 'react';
 import { UI_SCALE_MULTIPLIERS } from '@/ui/theme/constants/UiScaleMultipliers';
 import { useSystemColorScheme } from '@/ui/theme/hooks/useSystemColorScheme';
 import { isHostedInIosEmbed } from '@/domain-manager/utils/iosEmbedHost';
+import { iosHostColorSchemeState } from '@/ui/theme/states/iosHostColorSchemeState';
 import { persistedColorSchemeState } from '@/ui/theme/states/persistedColorSchemeState';
 import { persistedUiScaleStepState } from '@/ui/theme/states/persistedUiScaleStepState';
 import { useAtomState } from '@/ui/utilities/state/jotai/hooks/useAtomState';
@@ -45,8 +46,11 @@ export const BaseThemeProvider = ({ children }: BaseThemeProviderProps) => {
     persistedColorSchemeState,
   );
   const persistedUiScaleStep = useAtomStateValue(persistedUiScaleStepState);
+  const iosHostColorScheme = useAtomStateValue(iosHostColorSchemeState);
   const systemColorScheme = useSystemColorScheme();
-  const iframeHostScheme = readIframeHostColorScheme();
+  const iframeHostScheme = isHostedInIosEmbed()
+    ? (iosHostColorScheme ?? readIframeHostColorScheme())
+    : null;
   const effectiveColorScheme =
     iframeHostScheme ??
     (persistedColorScheme === 'System'
