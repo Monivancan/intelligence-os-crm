@@ -322,11 +322,7 @@ export class FlatPageLayoutWidgetValidatorService {
 
     const errors: FlatEntityValidationError[] = [];
     const hasAnotherTabViewportWidget = activeSiblingWidgets.some(
-      (siblingWidget) => {
-        const siblingPosition = this.getEffectivePosition(siblingWidget);
-
-        return this.isViewportFillingWidget(siblingWidget);
-      },
+      (siblingWidget) => this.isViewportFillingWidget(siblingWidget),
     );
 
     if (isTabViewportWidget && hasAnotherTabViewportWidget) {
