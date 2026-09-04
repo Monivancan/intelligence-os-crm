@@ -103,4 +103,58 @@ describe('fromPageLayoutTabManifestToUniversalFlatPageLayoutTab', () => {
 
     expect(result.layoutMode).toBe(PageLayoutTabLayoutMode.GRID);
   });
+
+  it('should normalize a single-widget legacy Canvas tab to VERTICAL_LIST', () => {
+    const result = fromPageLayoutTabManifestToUniversalFlatPageLayoutTab({
+      pageLayoutTabManifest: {
+        universalIdentifier: 'tab-uuid-6',
+        title: 'App',
+        position: 0,
+        layoutMode: PageLayoutTabLayoutMode.CANVAS,
+        widgets: [
+          {
+            universalIdentifier: 'widget-uuid-1',
+            title: 'App',
+            type: 'FRONT_COMPONENT',
+            configuration: {
+              configurationType: 'FRONT_COMPONENT',
+              frontComponentUniversalIdentifier: 'front-component-uuid-1',
+            },
+          },
+        ],
+      },
+      pageLayoutUniversalIdentifier,
+      pageLayoutType: PageLayoutType.RECORD_PAGE,
+      applicationUniversalIdentifier,
+      now,
+    });
+
+    expect(result.layoutMode).toBe(PageLayoutTabLayoutMode.VERTICAL_LIST);
+  });
+
+  it.each([0, 2])(
+    'should leave a legacy Canvas tab with %i widgets unchanged',
+    (widgetCount) => {
+      const result = fromPageLayoutTabManifestToUniversalFlatPageLayoutTab({
+        pageLayoutTabManifest: {
+          universalIdentifier: 'tab-uuid-7',
+          title: 'Ambiguous Canvas',
+          position: 0,
+          layoutMode: PageLayoutTabLayoutMode.CANVAS,
+          widgets: Array.from({ length: widgetCount }, (_, index) => ({
+            universalIdentifier: `widget-uuid-${index}`,
+            title: `Widget ${index}`,
+            type: 'VIEW' as const,
+            configuration: { configurationType: 'VIEW' as const },
+          })),
+        },
+        pageLayoutUniversalIdentifier,
+        pageLayoutType: PageLayoutType.RECORD_PAGE,
+        applicationUniversalIdentifier,
+        now,
+      });
+
+      expect(result.layoutMode).toBe(PageLayoutTabLayoutMode.CANVAS);
+    },
+  );
 });

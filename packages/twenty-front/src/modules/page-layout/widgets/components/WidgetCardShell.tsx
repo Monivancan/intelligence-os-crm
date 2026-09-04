@@ -7,8 +7,7 @@ import { WidgetContentRenderer } from '@/page-layout/widgets/components/WidgetCo
 import { WidgetComponentInstanceContext } from '@/page-layout/widgets/states/contexts/WidgetComponentInstanceContext';
 import { type WidgetAccessDenialInfo } from '@/page-layout/widgets/types/WidgetAccessDenialInfo';
 import { type WidgetCardVariant } from '@/page-layout/widgets/types/WidgetCardVariant';
-import { getWidgetContentPadding } from '@/page-layout/widgets/utils/getWidgetContentPadding';
-import { isWidgetCardFlushInViewMode } from '@/page-layout/widgets/utils/isWidgetCardFlushInViewMode';
+import { getWidgetCardContentPadding } from '@/page-layout/widgets/utils/getWidgetCardContentPadding';
 import { WidgetCard } from '@/page-layout/widgets/widget-card/components/WidgetCard';
 import { WidgetCardContent } from '@/page-layout/widgets/widget-card/components/WidgetCardContent';
 import { WidgetCardHeader } from '@/page-layout/widgets/widget-card/components/WidgetCardHeader';
@@ -69,12 +68,11 @@ export const WidgetCardShell = ({
     currentPageLayout.type === PageLayoutType.RECORD_PAGE &&
     isVerticalList &&
     widget.type === WidgetType.IFRAME;
-  const contentPadding = isWidgetCardFlushInViewMode({
+  const contentPadding = getWidgetCardContentPadding({
+    widget,
     isEditable,
     variant,
-  })
-    ? getWidgetContentPadding(widget.type)
-    : 'default';
+  });
 
   const dataTestId =
     widget.type === WidgetType.FIELDS ? 'record-fields-widget' : widget.id;

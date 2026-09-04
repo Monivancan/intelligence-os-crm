@@ -3,6 +3,7 @@ import { DEFAULT_WIDGET_SIZE } from 'twenty-shared/constants';
 import {
   type GridPosition,
   PageLayoutTabLayoutMode,
+  PageLayoutWidgetVerticalListHeightBehavior,
   WidgetType,
 } from 'twenty-shared/types';
 
@@ -158,5 +159,31 @@ describe('fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget', () => {
     });
 
     expect(result.position).toEqual(expectedPosition);
+  });
+
+  it('should normalize a legacy Canvas widget to TAB_VIEWPORT even when it has an explicit Canvas position', () => {
+    const result = fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget({
+      pageLayoutWidgetManifest: {
+        universalIdentifier: 'widget-uuid-canvas',
+        title: 'Legacy App',
+        type: WidgetType.FRONT_COMPONENT,
+        position: { layoutMode: PageLayoutTabLayoutMode.CANVAS },
+        configuration: {
+          configurationType: 'FRONT_COMPONENT',
+          frontComponentUniversalIdentifier: 'front-component-uuid-1',
+        },
+      },
+      pageLayoutTabUniversalIdentifier,
+      pageLayoutTabLayoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      isLegacyCanvasTab: true,
+      applicationUniversalIdentifier,
+      now,
+    });
+
+    expect(result.position).toEqual({
+      layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      index: 0,
+      heightBehavior: PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+    });
   });
 });

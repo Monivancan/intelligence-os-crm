@@ -1,4 +1,8 @@
-import { definePageLayout, PageLayoutTabLayoutMode } from 'twenty-sdk/define';
+import {
+  definePageLayout,
+  PageLayoutTabLayoutMode,
+  PageLayoutWidgetVerticalListHeightBehavior,
+} from 'twenty-sdk/define';
 
 import {
   MY_PROFILE_FRONT_COMPONENT_ID,
@@ -17,13 +21,18 @@ export default definePageLayout({
       title: 'My Profile',
       position: 0,
       icon: 'IconUser',
-      layoutMode: PageLayoutTabLayoutMode.CANVAS,
+      layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
       widgets: [
         {
           universalIdentifier: MY_PROFILE_PAGE_WIDGET_ID,
           title: 'My Profile',
           type: 'FRONT_COMPONENT',
-          position: { layoutMode: PageLayoutTabLayoutMode.CANVAS },
+          position: {
+            layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+            index: 0,
+            heightBehavior:
+              PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+          },
           configuration: {
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier: MY_PROFILE_FRONT_COMPONENT_ID,

@@ -5,13 +5,18 @@ import { ALL_METADATA_NAME } from 'twenty-shared/metadata';
 import {
   PageLayoutTabLayoutMode,
   PageLayoutWidgetPosition,
+  PageLayoutWidgetVerticalListHeightBehavior,
 } from 'twenty-shared/types';
 import { isDefined } from 'twenty-shared/utils';
 
 import { findFlatEntityByUniversalIdentifier } from 'src/engine/metadata-modules/flat-entity/utils/find-flat-entity-by-universal-identifier.util';
 import { FlatPageLayoutWidgetTypeValidatorService } from 'src/engine/metadata-modules/flat-page-layout-widget/services/flat-page-layout-widget-type-validator.service';
 import { PageLayoutTabExceptionCode } from 'src/engine/metadata-modules/page-layout-tab/exceptions/page-layout-tab.exception';
-import { PageLayoutWidgetExceptionCode } from 'src/engine/metadata-modules/page-layout-widget/exceptions/page-layout-widget.exception';
+import {
+  generatePageLayoutWidgetExceptionMessage,
+  PageLayoutWidgetExceptionCode,
+  PageLayoutWidgetExceptionMessageKey,
+} from 'src/engine/metadata-modules/page-layout-widget/exceptions/page-layout-widget.exception';
 import { validatePageLayoutWidgetGridPosition } from 'src/engine/metadata-modules/page-layout-widget/utils/validate-page-layout-widget-grid-position.util';
 import { validatePageLayoutWidgetVerticalListPosition } from 'src/engine/metadata-modules/page-layout-widget/utils/validate-page-layout-widget-vertical-list-position.util';
 import { type UniversalFlatPageLayoutTab } from 'src/engine/workspace-manager/workspace-migration/universal-flat-entity/types/universal-flat-page-layout-tab.type';
@@ -95,12 +100,21 @@ export class FlatPageLayoutWidgetValidatorService {
     }
 
     const positionErrors = this.validatePosition({
-      position: updatedFlatPageLayoutWidget.position,
+      position: this.getEffectivePosition(updatedFlatPageLayoutWidget),
       pageLayoutTab: referencedPageLayoutTab,
       widgetTitle: updatedFlatPageLayoutWidget.title,
     });
 
     validationResult.errors.push(...positionErrors);
+    validationResult.errors.push(
+      ...this.validateTabViewportConstraints({
+        widget: updatedFlatPageLayoutWidget,
+        relatedWidgets: Object.values(
+          optimisticFlatEntityMapsAndRelatedFlatEntityMaps
+            .flatPageLayoutWidgetMaps.byUniversalIdentifier,
+        ).filter(isDefined),
+      }),
+    );
 
     const typeSpecificityErrors =
       this.flatPageLayoutWidgetTypeValidatorService.validateFlatPageLayoutWidgetTypeSpecificitiesForUpdate(
@@ -208,12 +222,26 @@ export class FlatPageLayoutWidgetValidatorService {
     }
 
     const positionErrors = this.validatePosition({
-      position: flatPageLayoutWidgetToValidate.position,
+      position: this.getEffectivePosition(flatPageLayoutWidgetToValidate),
       pageLayoutTab: referencedPageLayoutTab,
       widgetTitle: flatPageLayoutWidgetToValidate.title,
     });
 
     validationResult.errors.push(...positionErrors);
+    validationResult.errors.push(
+      ...this.validateTabViewportConstraints({
+        widget: flatPageLayoutWidgetToValidate,
+        relatedWidgets: [
+          ...Object.values(
+            optimisticFlatEntityMapsAndRelatedFlatEntityMaps
+              .flatPageLayoutWidgetMaps.byUniversalIdentifier,
+          ).filter(isDefined),
+          ...Object.values(
+            remainingFlatEntityMapsToValidate.byUniversalIdentifier,
+          ).filter(isDefined),
+        ],
+      }),
+    );
 
     const typeSpecificityErrors =
       this.flatPageLayoutWidgetTypeValidatorService.validateFlatPageLayoutWidgetTypeSpecificitiesForCreation(
@@ -242,6 +270,121 @@ export class FlatPageLayoutWidgetValidatorService {
       widget.universalOverrides?.pageLayoutTabUniversalIdentifier ??
       widget.pageLayoutTabUniversalIdentifier
     );
+  }
+
+  private getEffectivePosition(
+    widget: Pick<
+      UniversalFlatPageLayoutWidget,
+      'position' | 'universalOverrides'
+    >,
+  ): PageLayoutWidgetPosition | null | undefined {
+    if (
+      isDefined(widget.universalOverrides) &&
+      Object.prototype.hasOwnProperty.call(
+        widget.universalOverrides,
+        'position',
+      )
+    ) {
+      return widget.universalOverrides.position;
+    }
+
+    return widget.position;
+  }
+
+  private validateTabViewportConstraints({
+    widget,
+    relatedWidgets,
+  }: {
+    widget: UniversalFlatPageLayoutWidget;
+    relatedWidgets: UniversalFlatPageLayoutWidget[];
+  }): FlatEntityValidationError[] {
+    const position = this.getEffectivePosition(widget);
+
+    if (
+      !widget.isActive ||
+      !isDefined(position) ||
+      position.layoutMode !== PageLayoutTabLayoutMode.VERTICAL_LIST
+    ) {
+      return [];
+    }
+
+    const isTabViewportWidget =
+      position.heightBehavior ===
+      PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT;
+
+    const pageLayoutTabUniversalIdentifier =
+      this.getEffectivePageLayoutTabUniversalIdentifier(widget);
+    const activeSiblingWidgets = relatedWidgets.filter(
+      (relatedWidget) =>
+        relatedWidget.universalIdentifier !== widget.universalIdentifier &&
+        relatedWidget.isActive &&
+        this.getEffectivePageLayoutTabUniversalIdentifier(relatedWidget) ===
+          pageLayoutTabUniversalIdentifier,
+    );
+
+    const errors: FlatEntityValidationError[] = [];
+    const hasAnotherTabViewportWidget = activeSiblingWidgets.some(
+      (siblingWidget) => {
+        const siblingPosition = this.getEffectivePosition(siblingWidget);
+
+        return (
+          isDefined(siblingPosition) &&
+          siblingPosition.layoutMode ===
+            PageLayoutTabLayoutMode.VERTICAL_LIST &&
+          siblingPosition.heightBehavior ===
+            PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT
+        );
+      },
+    );
+
+    if (isTabViewportWidget && hasAnotherTabViewportWidget) {
+      errors.push({
+        code: PageLayoutWidgetExceptionCode.INVALID_PAGE_LAYOUT_WIDGET_DATA,
+        message: generatePageLayoutWidgetExceptionMessage(
+          PageLayoutWidgetExceptionMessageKey.INVALID_WIDGET_POSITION,
+          widget.title,
+          undefined,
+          'only one active TAB_VIEWPORT widget is allowed per vertical-list tab',
+        ),
+        userFriendlyMessage: msg`Only one full-height widget is allowed per tab`,
+      });
+    }
+
+    const hasInvalidWidgetOrdering = activeSiblingWidgets.some(
+      (siblingWidget) => {
+        const siblingPosition = this.getEffectivePosition(siblingWidget);
+
+        if (
+          !isDefined(siblingPosition) ||
+          siblingPosition.layoutMode !== PageLayoutTabLayoutMode.VERTICAL_LIST
+        ) {
+          return false;
+        }
+
+        const isSiblingTabViewport =
+          siblingPosition.heightBehavior ===
+          PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT;
+
+        return isTabViewportWidget
+          ? !isSiblingTabViewport && siblingPosition.index >= position.index
+          : isSiblingTabViewport && siblingPosition.index <= position.index;
+      },
+    );
+
+    if (hasInvalidWidgetOrdering) {
+      errors.push({
+        code: PageLayoutWidgetExceptionCode.INVALID_PAGE_LAYOUT_WIDGET_DATA,
+        message: generatePageLayoutWidgetExceptionMessage(
+          PageLayoutWidgetExceptionMessageKey.INVALID_WIDGET_POSITION,
+          widget.title,
+          undefined,
+          'TAB_VIEWPORT widgets must be ordered after fit-content widgets',
+        ),
+        userFriendlyMessage: msg`Full-height widgets must be placed after fit-content widgets`,
+      });
+    }
+
+    return errors;
   }
 
   private validatePosition({

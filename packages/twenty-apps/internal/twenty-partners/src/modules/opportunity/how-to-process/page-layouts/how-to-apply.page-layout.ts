@@ -1,4 +1,8 @@
-import { PageLayoutTabLayoutMode, definePageLayout } from 'twenty-sdk/define';
+import {
+  PageLayoutTabLayoutMode,
+  PageLayoutWidgetVerticalListHeightBehavior,
+  definePageLayout,
+} from 'twenty-sdk/define';
 
 import {
   HOW_TO_APPLY_FRONT_COMPONENT_ID,
@@ -17,12 +21,18 @@ export default definePageLayout({
       title: 'How to apply',
       position: 0,
       icon: 'IconListCheck',
-      layoutMode: PageLayoutTabLayoutMode.CANVAS,
+      layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
       widgets: [
         {
           universalIdentifier: HOW_TO_APPLY_PAGE_WIDGET_ID,
           title: 'How to apply',
           type: 'FRONT_COMPONENT',
+          position: {
+            layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+            index: 0,
+            heightBehavior:
+              PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+          },
           configuration: {
             configurationType: 'FRONT_COMPONENT',
             frontComponentUniversalIdentifier: HOW_TO_APPLY_FRONT_COMPONENT_ID,

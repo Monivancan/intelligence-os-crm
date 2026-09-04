@@ -3,6 +3,7 @@ import { DEFAULT_WIDGET_SIZE } from 'twenty-shared/constants';
 import {
   type GridPosition,
   PageLayoutTabLayoutMode,
+  PageLayoutWidgetVerticalListHeightBehavior,
   type PageLayoutWidgetPosition,
   type WidgetType,
 } from 'twenty-shared/types';
@@ -19,11 +20,21 @@ const getPageLayoutWidgetPosition = ({
   pageLayoutWidgetManifest,
   pageLayoutTabLayoutMode,
   widgetIndex,
+  isLegacyCanvasTab,
 }: {
   pageLayoutWidgetManifest: PageLayoutWidgetManifest;
   pageLayoutTabLayoutMode: PageLayoutTabLayoutMode;
   widgetIndex: number;
+  isLegacyCanvasTab: boolean;
 }): PageLayoutWidgetPosition => {
+  if (isLegacyCanvasTab) {
+    return {
+      layoutMode: PageLayoutTabLayoutMode.VERTICAL_LIST,
+      index: widgetIndex,
+      heightBehavior: PageLayoutWidgetVerticalListHeightBehavior.TAB_VIEWPORT,
+    };
+  }
+
   if (isDefined(pageLayoutWidgetManifest.position)) {
     return pageLayoutWidgetManifest.position;
   }
@@ -64,6 +75,7 @@ export const fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget = ({
   pageLayoutTabUniversalIdentifier,
   pageLayoutTabLayoutMode = PageLayoutTabLayoutMode.GRID,
   widgetIndex = 0,
+  isLegacyCanvasTab = false,
   applicationUniversalIdentifier,
   now,
 }: {
@@ -71,6 +83,7 @@ export const fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget = ({
   pageLayoutTabUniversalIdentifier: string;
   pageLayoutTabLayoutMode?: PageLayoutTabLayoutMode;
   widgetIndex?: number;
+  isLegacyCanvasTab?: boolean;
   applicationUniversalIdentifier: string;
   now: string;
 }): UniversalFlatPageLayoutWidget => {
@@ -89,6 +102,7 @@ export const fromPageLayoutWidgetManifestToUniversalFlatPageLayoutWidget = ({
       pageLayoutWidgetManifest,
       pageLayoutTabLayoutMode,
       widgetIndex,
+      isLegacyCanvasTab,
     }),
     universalConfiguration:
       pageLayoutWidgetManifest.configuration as UniversalFlatPageLayoutWidget['universalConfiguration'],

@@ -19,6 +19,10 @@ export const fromPageLayoutTabManifestToUniversalFlatPageLayoutTab = ({
   applicationUniversalIdentifier: string;
   now: string;
 }): UniversalFlatPageLayoutTab => {
+  const shouldNormalizeLegacyCanvasTab =
+    pageLayoutTabManifest.layoutMode === PageLayoutTabLayoutMode.CANVAS &&
+    pageLayoutTabManifest.widgets?.length === 1;
+
   return {
     universalIdentifier: pageLayoutTabManifest.universalIdentifier,
     applicationUniversalIdentifier,
@@ -26,11 +30,12 @@ export const fromPageLayoutTabManifestToUniversalFlatPageLayoutTab = ({
     position: pageLayoutTabManifest.position,
     pageLayoutUniversalIdentifier,
     icon: pageLayoutTabManifest.icon ?? null,
-    layoutMode:
-      pageLayoutTabManifest.layoutMode ??
-      (pageLayoutType === PageLayoutType.STANDALONE_PAGE
-        ? PageLayoutTabLayoutMode.VERTICAL_LIST
-        : PageLayoutTabLayoutMode.GRID),
+    layoutMode: shouldNormalizeLegacyCanvasTab
+      ? PageLayoutTabLayoutMode.VERTICAL_LIST
+      : (pageLayoutTabManifest.layoutMode ??
+        (pageLayoutType === PageLayoutType.STANDALONE_PAGE
+          ? PageLayoutTabLayoutMode.VERTICAL_LIST
+          : PageLayoutTabLayoutMode.GRID)),
     isActive: true,
     isSystemSideEffect: false,
     widgetUniversalIdentifiers: [],

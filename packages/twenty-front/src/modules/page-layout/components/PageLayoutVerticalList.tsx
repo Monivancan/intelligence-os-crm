@@ -4,8 +4,7 @@ import { useIsSideColumnContext } from '@/page-layout/hooks/useIsSideColumnConte
 import { type PageLayoutWidget } from '@/page-layout/types/PageLayoutWidget';
 import { type PageLayoutWidgetListDropData } from '@/page-layout/types/PageLayoutWidgetListDropData';
 import { canVerticalListAcceptWidgetDrag } from '@/page-layout/utils/canVerticalListAcceptWidgetDrag';
-import { getIsSingleWidgetTab } from '@/page-layout/utils/getIsSingleWidgetTab';
-import { isViewportFillingWidgetType } from '@/page-layout/widgets/utils/isViewportFillingWidgetType';
+import { isViewportFillingWidget } from '@/page-layout/widgets/utils/isViewportFillingWidget';
 import { DragDropItemDropTarget } from '@/ui/utilities/drag-and-drop/components/DragDropItemDropTarget';
 import { WorkflowDiagramAllowPageScrollContext } from '@/workflow/workflow-diagram/contexts/WorkflowDiagramAllowPageScrollContext';
 import { type Draggable } from '@dnd-kit/abstract';
@@ -15,7 +14,6 @@ import { styled } from '@linaria/react';
 import { Fragment, type ReactNode, useCallback } from 'react';
 import { isDefined } from 'twenty-shared/utils';
 import { themeCssVariables } from 'twenty-ui/theme-constants';
-import { PageLayoutTabLayoutMode } from '~/generated-metadata/graphql';
 
 const StyledVerticalListContainer = styled.div<{
   isInEditMode: boolean;
@@ -95,24 +93,13 @@ export const PageLayoutVerticalList = ({
   const { isInPinnedTab, isMobile, isSideColumnContext } =
     useIsSideColumnContext();
 
-  const shouldUseSoloCanvasPresentation =
-    layoutMode === PageLayoutTabLayoutMode.CANVAS &&
-    getIsSingleWidgetTab({
-      tab: {
-        layoutMode,
-        widgets,
-      },
-    }) &&
-    !isInEditMode &&
-    !isInPinnedTab;
-
   // A viewport-filling slot is exactly one viewport tall, so the list only
   // overflows when something else shares it. Widgets that capture the wheel
   // (workflow canvases) must keep it when there is no page scroll to reach.
   const hasPageScroll = isInEditMode || widgets.length > 1;
 
-  const firstViewportFillingWidgetIndex = widgets.findIndex((widget) =>
-    isViewportFillingWidgetType(widget.type),
+  const firstViewportFillingWidgetIndex = widgets.findIndex(
+    isViewportFillingWidget,
   );
   const hasViewportFillingWidget = firstViewportFillingWidgetIndex !== -1;
 
@@ -161,7 +148,6 @@ export const PageLayoutVerticalList = ({
               canAcceptWidgetDrag={canAcceptWidgetDrag}
               index={index}
               isInEditMode={isInEditMode}
-              isSoloCanvasPresentation={shouldUseSoloCanvasPresentation}
               layoutMode={layoutMode}
               shouldShowDivider={isSideColumnContext}
               tabId={tabId}
