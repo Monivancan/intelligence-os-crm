@@ -105,6 +105,11 @@ const setup = ({
     completeOnboardingProfileStepIfNameProvided: jest.fn(() => {
       isProfileCreationPending = false;
     }),
+    setOnboardingConnectAccountPending: jest.fn(),
+    setOnboardingInstallAppsPending: jest.fn(),
+    setOnboardingCreateProfilePending: jest.fn(),
+    setOnboardingInviteTeamPending: jest.fn(),
+    setOnboardingBookCallPending: jest.fn(),
   };
 
   const service = new IosSessionExchangeService(
@@ -178,6 +183,41 @@ describe('IosSessionExchangeService', () => {
       userWorkspaceIds: ['user-workspace-id'],
       roleId: 'admin-role-id',
     });
+    expect(
+      onboardingService.setOnboardingConnectAccountPending,
+    ).toHaveBeenCalledWith({
+      userId: 'twenty-user-id',
+      workspaceId: TWENTY_WORKSPACE_ID,
+      value: false,
+    });
+    expect(
+      onboardingService.setOnboardingInstallAppsPending,
+    ).toHaveBeenCalledWith({
+      userId: 'twenty-user-id',
+      workspaceId: TWENTY_WORKSPACE_ID,
+      value: false,
+    });
+    expect(
+      onboardingService.setOnboardingCreateProfilePending,
+    ).toHaveBeenCalledWith({
+      userId: 'twenty-user-id',
+      workspaceId: TWENTY_WORKSPACE_ID,
+      value: false,
+    });
+    expect(
+      onboardingService.setOnboardingInviteTeamPending,
+    ).toHaveBeenCalledWith({
+      userId: 'twenty-user-id',
+      workspaceId: TWENTY_WORKSPACE_ID,
+      value: false,
+    });
+    expect(onboardingService.setOnboardingBookCallPending).toHaveBeenCalledWith(
+      {
+        userId: 'twenty-user-id',
+        workspaceId: TWENTY_WORKSPACE_ID,
+        value: false,
+      },
+    );
     expect(ssoExchangeTokenService.generateSsoExchangeToken).toHaveBeenCalled();
   });
 

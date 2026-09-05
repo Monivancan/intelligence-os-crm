@@ -114,6 +114,34 @@ export class IosSessionExchangeService {
       lastName: lastNameParts.join(' '),
     });
 
+    // IOS owns the workspace setup flow, so an authenticated IOS member must
+    // enter CRM directly instead of repeating Twenty's standalone onboarding.
+    await this.onboardingService.setOnboardingConnectAccountPending({
+      userId: user.id,
+      workspaceId: workspace.id,
+      value: false,
+    });
+    await this.onboardingService.setOnboardingInstallAppsPending({
+      userId: user.id,
+      workspaceId: workspace.id,
+      value: false,
+    });
+    await this.onboardingService.setOnboardingCreateProfilePending({
+      userId: user.id,
+      workspaceId: workspace.id,
+      value: false,
+    });
+    await this.onboardingService.setOnboardingInviteTeamPending({
+      userId: user.id,
+      workspaceId: workspace.id,
+      value: false,
+    });
+    await this.onboardingService.setOnboardingBookCallPending({
+      userId: user.id,
+      workspaceId: workspace.id,
+      value: false,
+    });
+
     const workspaceMember = await this.userService.loadWorkspaceMember(
       user,
       workspace,
