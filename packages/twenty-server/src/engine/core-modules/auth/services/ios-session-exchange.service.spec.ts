@@ -151,6 +151,7 @@ describe('IosSessionExchangeService', () => {
   it('consumes the assertion once and returns a Twenty one-time token', async () => {
     const {
       redisSet,
+      onboardingService,
       roleService,
       service,
       ssoExchangeTokenService,
